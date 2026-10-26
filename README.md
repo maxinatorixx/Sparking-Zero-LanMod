@@ -25,8 +25,6 @@ changes pass integration tests and still need verification in the actual game.
 ![Arena website with fighter profile and configurable artwork](docs/screenshots/website.png)
 
 ## Requirements
-
-- A legitimately owned, installed Windows copy of the game on every client.
 - Windows, or Linux with Wine configured to run that installation.
 - Docker Engine/Desktop with Docker Compose on the server machine.
 - Matching Arena client/server versions and compatible game versions/settings.
@@ -34,15 +32,6 @@ changes pass integration tests and still need verification in the actual game.
 The release contains one-file Windows and Linux launchers. **Players do not
 need to install Python.** The server runs the game service, website and MariaDB
 inside one container. Linux still needs Wine to run the Windows game.
-
-Native helpers currently target this exact shipping executable SHA-256:
-
-```text
-e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55
-```
-
-Other game updates are not automatically compatible. Native hooks use build
-and instruction checks; do not remove those checks to force an unsupported build.
 
 ## Install and start the server
 
