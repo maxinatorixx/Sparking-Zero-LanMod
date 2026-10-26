@@ -135,6 +135,16 @@ resource checks; published experimental full-ZIP release. Downloaded manifests
 and native DLLs verified. Windows checkout converted Lua to CRLF in v0.1.0;
 .gitattributes now pins LF and v0.1.1 rebuilds byte-identical mod resources.
 No network/game logic changed. This is not game proof.
+Final published v0.1.1 run40400024277 succeeded on both native platform builds,
+exact11-resource checks and UI checks, then release publication. Downloaded all
+assets and verified GitHub digests, all39Arena/all204source manifest entries,
+exact user screenshots/docs, and independently read back both onefiles'6Lua,
+3nativeDLL, MinHooklicense and pinnedUE4SSarchive bytes against current source.
+ArenaZIP:d0754e03b46a79698770926779cff445b300fb75117fdcc7992abc8e2ce3cf27
+SourceZIP:d123dac5c40c3d771767d89ac9c99e57137c71c1d97ff2cff97f16c639f493c0
+Local dist fullZIPs/checksums synchronized to published assets; all4 existing
+dist root/desktop standalone binaries remain unchanged. Release URL:
+https://github.com/maxinatorixx/Sparking-Zero-LanMod/releases/tag/v0.1.1
 Future v* tags build/publish through scoped job GITHUB_TOKEN; no personal token
 or SSH private key belongs in source. Private deploy key remains outside Git.
 Only source/docs/our payloads/licensed UE4SS are tracked. Exclude original game,
