@@ -35,6 +35,9 @@ jobs:
           docker run --rm --network none \
             --mount type=bind,source="$PWD/.build/desktop",target=/output \
             arena-launcher-builder:ci
+          docker run --rm --network none --entrypoint /build/venv/bin/python \
+            --mount type=bind,source="$PWD/.build/desktop",target=/output,readonly \
+            arena-launcher-builder:ci /src/verify_desktop_payload.py /output/SzeroLAN-Linux
           xvfb-run -a .build/desktop/SzeroLAN-Linux --self-check --ui
       - name: Build Windows from source and check embedded resources
         if: runner.os == 'Windows'
@@ -44,6 +47,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Build dependency installation failed' }
           python lan/build_desktop.py
           if ($LASTEXITCODE -ne 0) { throw 'Windows build failed' }
+          python lan/verify_desktop_payload.py .build/desktop/SzeroLAN-Windows.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Frozen payload bytes differ from source' }
           $process = Start-Process -FilePath .build/desktop/SzeroLAN-Windows.exe -ArgumentList '--self-check','--ui' -Wait -PassThru
           if ($process.ExitCode -ne 0) { throw 'Standalone resource/UI self-check failed' }
       - uses: actions/upload-artifact@v4

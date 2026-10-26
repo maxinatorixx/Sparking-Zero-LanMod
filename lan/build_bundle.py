@@ -46,6 +46,7 @@ FILES = (
     "lan/compose.yaml",
     "lan/desktop.py",
     "lan/build_desktop.py",
+    "lan/verify_desktop_payload.py",
     "lan/build_icon.py",
     "lan/assets/four-star.png",
     "lan/assets/four-star.ico",

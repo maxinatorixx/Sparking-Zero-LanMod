@@ -158,6 +158,8 @@ secure game-port credentials. DB users/volumes/proxy: [ACCOUNTS.md](ACCOUNTS.md)
 ## Builds and packaging
 
 `build_desktop.py` freezes `desktop.py` plus Lua, DLLs, UE4SS and icons.
+`verify_desktop_payload.py` compares embedded Lua/native/loader resources byte
+for byte against source; CI runs it before publishing either platform.
 `build_icon.py` prepares the four-star icon. `build-requirements.txt` pins build
 dependencies; `Build-Launcher.cmd` and `build-launcher.sh` create environments.
 `Dockerfile.launcher` uses the Ubuntu22.04 compatibility baseline for Linux.
