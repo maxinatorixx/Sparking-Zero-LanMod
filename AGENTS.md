@@ -131,7 +131,10 @@ https://github.com/maxinatorixx/Sparking-Zero-LanMod . Preserve initial remote
 commit6f51e228e34402198e90fbaa79d521cc2e68426e; don't force-push history.
 Project commit3b725fcb19a5b5e1006db50d829e36f3bf373c31 is taggedv0.1.0.
 GitHub Actions run40399079913 succeeded on native Windows/Linux builds and UI/
-resource checks; published experimental full-ZIP release. This is not game proof.
+resource checks; published experimental full-ZIP release. Downloaded manifests
+and native DLLs verified. Windows checkout converted Lua to CRLF in v0.1.0;
+.gitattributes now pins LF and v0.1.1 rebuilds byte-identical mod resources.
+No network/game logic changed. This is not game proof.
 Future v* tags build/publish through scoped job GITHUB_TOKEN; no personal token
 or SSH private key belongs in source. Private deploy key remains outside Git.
 Only source/docs/our payloads/licensed UE4SS are tracked. Exclude original game,

@@ -1,0 +1,9 @@
+# Keep frozen resources identical across Linux and Windows checkouts.
+* text=auto eol=lf
+*.dll binary
+*.exe binary
+*.zip binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary

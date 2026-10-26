@@ -1,4 +1,7 @@
-# Arena v0.1.0 — experimental
+# Arena v0.1.1 — experimental
+
+Packaging update: Git now pins text line endings so both platform launchers
+embed byte-identical Lua resources. No game/network logic changed from v0.1.0.
 
 Download **SzeroLAN-Arena.zip** for both standalone launchers, the Docker server,
 installation documentation and screenshots. Players need no Python installation.
