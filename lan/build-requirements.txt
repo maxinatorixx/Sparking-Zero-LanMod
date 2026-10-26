@@ -1,0 +1,5 @@
+# Build machine only. End users need no Python or pip.
+PyInstaller==6.16.0
+pyinstaller-hooks-contrib==2026.9
+Pillow==12.3.0
+zstandard==0.25.0

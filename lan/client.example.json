@@ -1,0 +1,8 @@
+{
+  "server_host": "192.168.1.20",
+  "server_port": 27150,
+  "name": "Player",
+  "native_menu": false,
+  "native_search": true,
+  "native_session": true
+}

@@ -1,0 +1,13 @@
+{
+  "bind_host": "0.0.0.0",
+  "server_port": 27150,
+  "elo_matchmaking": {
+    "enabled": true,
+    "initial_range": 100,
+    "range_step": 100,
+    "expand_interval_seconds": 15,
+    "maximum_range": 600,
+    "any_rating_after_seconds": 120,
+    "queue_ttl_seconds": 600
+  }
+}

@@ -1,0 +1,8 @@
+**
+!*.py
+!build-requirements.txt
+!client.example.json
+!ue4ss/
+!ue4ss/**
+!vendor/
+!vendor/**

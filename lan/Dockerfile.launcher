@@ -1,0 +1,12 @@
+# Build Linux on an older glibc baseline instead of tying it to the dev host.
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive PYTHONDONTWRITEBYTECODE=1
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-tk python3-venv libpython3.10 binutils ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /build
+COPY build-requirements.txt ./
+RUN python3 -m venv /build/venv && /build/venv/bin/pip install -r build-requirements.txt
+COPY . /src
+ENV PYINSTALLER_CONFIG_DIR=/tmp/pyinstaller-cache
+ENTRYPOINT ["/build/venv/bin/python", "/src/build_desktop.py", "--output", "/output"]

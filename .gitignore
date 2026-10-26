@@ -1,0 +1,87 @@
+# Original game installation and proprietary analysis targets.
+/DRAGON BALL - Sparking! ZERO/
+/online/
+*.exe
+*.rne
+*.pak
+*.utoc
+*.ucas
+*.pdb
+*.dmp
+*.usmap
+*.dll
+!/lan/ue4ss/SzeroLAN/scripts/console_probe.dll
+!/lan/ue4ss/SzeroLAN/scripts/menu_bridge.dll
+!/lan/ue4ss/SzeroLAN/scripts/session_probe.dll
+!/lan/ue4ss/SzeroLAN/scripts/native_search.dll
+!/lan/ue4ss/SzeroLAN/scripts/backend_adapter.dll
+!/lan/ue4ss/SzeroLAN/scripts/service_trace.dll
+/FModel/
+/Output/
+/Exports/
+/Logs/
+/Saved/
+/SaveGame/
+/Dragon Ball Sparking Zero - Stutter Free mod/
+
+# Runtime / per-PC configuration and diagnostics (templates remain tracked).
+*.log
+*.log.[0-9]*
+*.bak
+*.tmp
+**/lan_runtime*
+**/console_probe_*.json
+**/menu_bridge_*.json
+**/menu_bridge_*.request
+**/session_trace_*.jsonl
+**/native_search_*.json
+/lan/setup.json
+/lan/client.json
+/lan/server.json
+/lan/.env
+.env
+.arena-env-*
+/SzeroLAN.json
+/lan/SzeroLAN.json
+
+# Generated distributions stay in GitHub Releases, not Git history.
+/dist/
+# Local reverse-engineering evidence is not part of the public source release.
+/analysis/
+# Removed rendering integration and its unused third-party payloads.
+/lan/vendor/stutter/
+/lan/stutter_mod.py
+/lan/test_stutter_mod.py
+*.gpr
+*.rep/
+*.gzf
+*.idb
+*.i64
+*.asar
+
+# Tool caches and editors.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.build-venv/
+/dist/desktop/
+/.build/
+**/bin/
+**/obj/
+.idea/
+.vscode/
+.agents/
+.codex/
+.aws/
+.DS_Store
+Thumbs.db
+
+# Extracted target assets are not project source.
+/analysis/exports/
+/analysis/package-exports/
+/analysis/scripts/widget-function-addresses.txt
+/analysis/scripts/widget-function-signatures.txt
+
+# Bundled, pinned official UE4SS release intentionally remains versionable:
+# lan/vendor/UE4SS_v3.0.1.zip and its provenance/license are project dependencies.

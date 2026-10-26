@@ -1,0 +1,31 @@
+{
+  "project": "UE4SS-RE/RE-UE4SS",
+  "version": "3.0.1",
+  "release": "https://github.com/UE4SS-RE/RE-UE4SS/releases/tag/v3.0.1",
+  "download": "https://github.com/UE4SS-RE/RE-UE4SS/releases/download/v3.0.1/UE4SS_v3.0.1.zip",
+  "published_at": "2024-02-14T19:59:38Z",
+  "downloaded_on": "2026-10-20",
+  "archive_sha256": "4b47d4bceddd2f561a4e395bfa00924ccfc945af576a2d0c613e6537846c57ec",
+  "upstream_asset_digest": null,
+  "license": "MIT",
+  "license_source": "https://raw.githubusercontent.com/UE4SS-RE/RE-UE4SS/v3.0.1/LICENSE",
+  "license_sha256": "ddc030e25d0ea87aca4ae84c0ed3f868d69273c00c0c12ea1e26f1c6130f5d2e",
+  "installed_archive_members": [
+    {
+      "path": "dwmapi.dll",
+      "sha256": "ce596412befa68c30b7f88f65beb77d9bdad55e9b96a276a5a9cf690c63f24bb"
+    },
+    {
+      "path": "UE4SS.dll",
+      "sha256": "8ac18fbffc1ef96b0662d4a2d537b3f224c26d65caaba7989a9404c566102b26"
+    },
+    {
+      "path": "UE4SS-settings.ini",
+      "sha256": "b3a9a1eb5b11f93413cd1c64278cdcdf5c6099601eaf2d8056da39b289a0914b"
+    },
+    {
+      "path": "Mods/shared/UEHelpers/UEHelpers.lua",
+      "sha256": "0360091748880fe82af01546f594561b771b5774304324e7665ec5738c9c6203"
+    }
+  ]
+}

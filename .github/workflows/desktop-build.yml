@@ -1,0 +1,88 @@
+name: Build launchers and publish full release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: arena-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Build Linux on the supported glibc baseline
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          docker build -f lan/Dockerfile.launcher -t arena-launcher-builder:ci lan
+          mkdir -p .build/desktop
+          docker run --rm --network none \
+            --mount type=bind,source="$PWD/.build/desktop",target=/output \
+            arena-launcher-builder:ci
+          xvfb-run -a .build/desktop/SzeroLAN-Linux --self-check --ui
+      - name: Build Windows from source and check embedded resources
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python -m pip install -r lan/build-requirements.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Build dependency installation failed' }
+          python lan/build_desktop.py
+          if ($LASTEXITCODE -ne 0) { throw 'Windows build failed' }
+          $process = Start-Process -FilePath .build/desktop/SzeroLAN-Windows.exe -ArgumentList '--self-check','--ui' -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Standalone resource/UI self-check failed' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: launcher-${{ runner.os }}
+          path: .build/desktop/SzeroLAN-*
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    needs: desktop
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: launcher-*
+          merge-multiple: true
+          path: .build/desktop
+      - name: Build and verify complete packages
+        run: |
+          python lan/build_release.py
+          python lan/build_bundle.py
+          python lan/build_bundle.py --check
+          (cd dist && sha256sum -c SzeroLAN-Arena.zip.sha256)
+      - name: Publish experimental release and full ZIP assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" --verify-tag --prerelease \
+            --title "Arena $RELEASE_TAG (experimental)" \
+            --notes-file docs/release-notes.md \
+            dist/SzeroLAN-Arena.zip dist/SzeroLAN-Arena.zip.sha256 \
+            dist/SzeroLAN-experimental.zip dist/SHA256SUMS.txt
