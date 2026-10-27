@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char szero_materializer_supported_sha256[] =
-    "e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55";
 
 _Static_assert(sizeof(uintptr_t) == 8, "Only x64 target layout supported");
 _Static_assert(sizeof(SzeroNativeString) == 0x20, "String layout");

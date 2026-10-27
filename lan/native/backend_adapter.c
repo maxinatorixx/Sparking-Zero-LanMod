@@ -7,6 +7,8 @@
 #include <windows.h>
 #include <ws2tcpip.h>
 #include <bcrypt.h>
+#include "native_image.h"
+#include "native_bindings.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,7 +86,6 @@ static const unsigned char prefixes[][16]={
  {0x40,0x55,0x48,0x8d,0x6c,0x24,0xa9,0x48,0x81,0xec,0xa0,0,0,0,0x48,0x8b},
  {0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x10,0x57,0x48,0x83,0xec,0x20,0x80},
  {0x40,0x53,0x48,0x83,0xec,0x20,0x48,0x8b,0xd9,0xe8,0x92,0x6a,0xe4,0xff,0x84,0xc0}};
-static const char expected[]="e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55";
 #ifdef SZERO_BACKEND_ADAPTER_TEST
 static uintptr_t fixture_entry;
 static uintptr_t fixture_rank_backend;
@@ -360,10 +361,10 @@ static int capture_rank_snapshot(void) {
     job.rank_default=rc==2;return rc!=0;
 #else
     uintptr_t context=0,vtable=0,session=0,backend=0;
-    if(!native_rank_category || !read_mem(image_base+0x8cf84f8,&context,8) || !context ||
-       context>UINTPTR_MAX-0x48 || !read_mem(context,&vtable,8) || vtable!=image_base+0x7ba1bf8 ||
+    if(!native_rank_category || !read_mem(image_base+szero_bind_rva(0x8cf84f8),&context,8) || !context ||
+       context>UINTPTR_MAX-0x48 || !read_mem(context,&vtable,8) || vtable!=image_base+szero_bind_rva(0x7ba1bf8) ||
        !read_mem(context+0x40,&session,8) || !session ||
-       !read_mem(image_base+0x87010e8,&backend,8) || !backend)return 0;
+       !read_mem(image_base+szero_bind_rva(0x87010e8),&backend,8) || !backend)return 0;
     uintptr_t members=0;uint64_t count=0;unsigned found=0,extra=0;
     if(session>UINTPTR_MAX-0x28 || !read_mem(session+0x18,&members,8) ||
        !read_mem(session+0x20,&count,8) || !count || count>8 || !members || count>(UINTPTR_MAX-members)/8)return 0;
@@ -412,8 +413,8 @@ static int normalize_card_target(uintptr_t request,char output[45]) {
         memcpy(output,target,39);ok=1;goto done;
     }
     uintptr_t context=0,vptr=0,bundle=0,user=0;unsigned char local[65];size_t local_size=0;
-    if(read_mem(image_base+0x8cf84f8,&context,8) && read_mem(context,&vptr,8) &&
-       vptr==image_base+0x7ba1bf8 && context<=UINTPTR_MAX-8 &&
+    if(read_mem(image_base+szero_bind_rva(0x8cf84f8),&context,8) && read_mem(context,&vptr,8) &&
+       vptr==image_base+szero_bind_rva(0x7ba1bf8) && context<=UINTPTR_MAX-8 &&
        read_mem(context+8,&bundle,8) && bundle<=UINTPTR_MAX-0x18 &&
        read_mem(bundle+0x18,&user,8) && user<=UINTPTR_MAX-0x200 &&
        native_text(user+0x200,local,sizeof(local),&local_size)) {
@@ -454,7 +455,7 @@ static int request_route(uintptr_t request,char path[96]) {
 static SzeroBackendView *create_view(void *unused) {
     (void)unused;SzeroBackendView *view=NULL;
     native_factory(0,&view);
-    if(view && view->vtable!=image_base+0x6d36f80) {
+    if(view && view->vtable!=image_base+szero_bind_rva(0x6d36f80)) {
         /* Do not call an unknown object's destructor. Quarantine this helper;
          * retaining one unexpected allocation is safer than dispatching it. */
         InterlockedExchange(&state,FAILED);return NULL;
@@ -658,39 +659,40 @@ static void flush_refusals(FILE *log,unsigned *logged) {
     }
 }
 static DWORD WINAPI worker(void *unused) {
-    (void)unused;wchar_t path[32768];char hash[65];unsigned char bytes[16];
+    (void)unused;wchar_t path[32768];unsigned char bytes[16];
     int result_enabled=0;
     int gate_enabled=0,gate_required=account_mode && !read_ranked_policy();
     wchar_t logging[4];
     int log_enabled=GetEnvironmentVariableW(L"SZERO_LAN_MOD_LOGGING",logging,4)==1 && logging[0]==L'1';
     FILE *log=log_enabled?_wfopen(log_path,L"wb"):NULL;
-    int valid=GetModuleFileNameW(NULL,path,32768) && sha256(path,hash) && !strcmp(hash,expected);
     image_base=(uintptr_t)GetModuleHandleW(NULL);
+    int valid=szero_native_image(image_base,0);
 #ifndef SZERO_BACKEND_ADAPTER_TEST
+    valid=valid && szero_bindings_init(image_base);
     for(size_t i=0;valid && i<sizeof(offsets)/sizeof(offsets[0]);++i)
-        valid=read_mem(image_base+offsets[i],bytes,16) && !memcmp(bytes,prefixes[i],16);
+        valid=szero_bind_prefix(image_base,offsets[i],prefixes[i],16);
     uintptr_t view_base=0,view_destroy=0;
-    valid=valid && read_mem(image_base+0x6d36f88,&view_base,8) &&
-        view_base==image_base+0x20f8b70 &&
-        read_mem(image_base+0x6d36f98,&view_destroy,8) && view_destroy==image_base+0x10fddc0;
-    battle_result_entry=image_base+0x23d76a0;
-    valid=valid && read_mem(battle_result_entry,bytes,16) && !memcmp(bytes,battle_result_prefix,16);
+    valid=valid && read_mem(image_base+szero_bind_rva(0x6d36f88),&view_base,8) &&
+        view_base==image_base+szero_bind_rva(0x20f8b70) &&
+        read_mem(image_base+szero_bind_rva(0x6d36f98),&view_destroy,8) && view_destroy==image_base+szero_bind_rva(0x10fddc0);
+    battle_result_entry=image_base+szero_bind_rva(0x23d76a0);
+    valid=valid && szero_bind_prefix(image_base,0x23d76a0,battle_result_prefix,16);
     if(!valid) goto fail;
     if(gate_required) {
-        maintenance_entry=image_base+0x5ada640;
-        if(!read_mem(maintenance_entry,bytes,16) || memcmp(bytes,maintenance_prefix,16)) goto fail;
+        maintenance_entry=image_base+szero_bind_rva(0x5ada640);
+        if(!szero_bind_prefix(image_base,0x5ada640,maintenance_prefix,16)) goto fail;
     }
-    current_task=(void *(*)(void))(image_base+offsets[5]);
-    yield_cancel=(unsigned char (*)(void *))(image_base+offsets[6]);
-    native_factory=(void *(*)(uintptr_t,SzeroBackendView **))(image_base+offsets[1]);
-    native_project=(void (*)(void *,SzeroBackendRaw *))(image_base+offsets[2]);
-    native_release_stream=(void (*)(SzeroBackendOwner *))(image_base+offsets[3]);
-    native_release_headers=(void (*)(SzeroBackendHeaders *))(image_base+offsets[4]);
-    native_rank_category=(uintptr_t (*)(uintptr_t))(image_base+offsets[7]);
-    entry=image_base+offsets[0];
+    current_task=(void *(*)(void))(image_base+szero_bind_rva(offsets[5]));
+    yield_cancel=(unsigned char (*)(void *))(image_base+szero_bind_rva(offsets[6]));
+    native_factory=(void *(*)(uintptr_t,SzeroBackendView **))(image_base+szero_bind_rva(offsets[1]));
+    native_project=(void (*)(void *,SzeroBackendRaw *))(image_base+szero_bind_rva(offsets[2]));
+    native_release_stream=(void (*)(SzeroBackendOwner *))(image_base+szero_bind_rva(offsets[3]));
+    native_release_headers=(void (*)(SzeroBackendHeaders *))(image_base+szero_bind_rva(offsets[4]));
+    native_rank_category=(uintptr_t (*)(uintptr_t))(image_base+szero_bind_rva(offsets[7]));
+    entry=image_base+szero_bind_rva(offsets[0]);
 #else
     (void)offsets;(void)prefixes;(void)bytes;(void)maintenance_prefix;(void)battle_result_prefix;
-    valid=fixture_entry!=0;if(!valid) goto fail;
+    valid=valid && fixture_entry!=0;if(!valid) goto fail;
     entry=fixture_entry;
 #endif
     WSADATA winsock;if(WSAStartup(MAKEWORD(2,2),&winsock)) goto fail;
@@ -717,7 +719,7 @@ static DWORD WINAPI worker(void *unused) {
         if(GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
             (const wchar_t *)(uintptr_t)&worker,&own) && GetModuleFileNameW(own,path,32768))sha256(path,helper_hash);
         log_event(log,"ready");
-        fprintf(log,",\"schema\":3,\"revision\":\"ranked-result1\",\"helper_sha256\":\"%s\","
+        fprintf(log,",\"schema\":3,\"revision\":\"ranked-bindings1\",\"helper_sha256\":\"%s\","
             "\"account_mode\":%s,\"guest_ranked_gate\":%s,\"card_route\":true,\"refusal_limit\":128}\n",
             helper_hash,account_mode?"true":"false",gate_enabled?"true":"false");fflush(log);
     }
@@ -776,7 +778,7 @@ fail:
     if(gate_enabled && read_mem(maintenance_entry,bytes,16) &&
        !memcmp(bytes,maintenance_installed,16)) MH_DisableHook((void *)maintenance_entry);
     InterlockedExchange(&state,FAILED);
-    if(log) {fputs("{\"event\":\"refused\"}\n",log);fclose(log);}
+    if(log) {fprintf(log,"{\"event\":\"refused\",\"binding_error\":\"%s\"}\n",szero_bindings_error());fclose(log);}
     return 0;
 }
 __declspec(dllexport) int szero_backend_adapter(void *lua) {

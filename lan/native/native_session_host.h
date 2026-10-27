@@ -1,5 +1,5 @@
 /* Guarded Windows callback binding; no DLL entry, hook or network operation.
- * The owner must have asynchronously verified the exact shipping SHA-256 and
+ * The owner must have asynchronously resolved and verified native bindings and
  * published its immutable service vptr clone before enabling this context. */
 #ifndef SZERO_NATIVE_SESSION_HOST_H
 #define SZERO_NATIVE_SESSION_HOST_H
@@ -8,7 +8,7 @@
 typedef struct {
     uintptr_t image_base, service, expected_vptr;
     uint32_t native_thread_id;
-    uint8_t exact_hash_verified;
+    uint8_t bindings_verified;
     void *vptr_owner;
     int (*owns_vptr)(void *owner, uintptr_t service, uintptr_t vptr);
     /* Caller may inspect these bounded reason codes, never raw identities. */

@@ -2,11 +2,12 @@
  * IN-MEMORY entry hooks only, NEVER disk patches. All native arguments/RAX
  * forwarded unchanged. Read-only outputs; no account/ticket/string logging.
  * Trampolines and DLL stay process-pinned for suspended native fibers.
- * Only the known game thread records; worker owns hashing, hooks and file I/O.
+ * Only the known game thread records; worker owns validation, hooks and file I/O.
  */
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <bcrypt.h>
+#include "native_image.h"
+#include "native_bindings.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -81,32 +82,20 @@ static const unsigned char prefixes[HOOKS][16]={
  {0x48,0x89,0x5c,0x24,0x10,0x57,0x48,0x83,0xec,0x50,0x0f,0x10,0x81,0x60,0x13,0x00}};
 /* Exact ORIGINAL call-return RVAs, independently checked as E8 instructions.
  * These classify a branch, not a ticket, address, packet or inferred exception. */
+static const uintptr_t origin_returns[11]={0x591ccde,0x591d089,0x591d25e,0x591e0be,
+ 0x591d4d5,0x591d677,0x591d83c,0x591d989,0x591dba4,0x591de47,0x591dfa4};
 static int failure_origin(uintptr_t caller,int slot) {
- if(caller<image_base) return 0;
+ if(caller<image_base || (slot!=8 && slot!=9)) return 0;
  uintptr_t rva=caller-image_base;
- if(slot==8) switch(rva) {
-  case 0x591ccde:return 1; /* request handle zero */
-  case 0x591d089:return 2; /* request header setter false */
-  case 0x591d25e:return 3; /* raw POST body setter false */
-  case 0x591e0be:return 4; /* unsupported method */
- }
- if(slot==9) switch(rva) {
-  case 0x591d4d5:return 5; /* certificate requirement setter false */
-  case 0x591d677:return 6; /* absolute timeout setter false */
-  case 0x591d83c:return 7; /* send request false */
-  case 0x591d989:return 8; /* send returned zero async call */
-  case 0x591dba4:return 9; /* async holder has error status, not necessarily remote */
-  case 0x591de47:return 10; /* native request holder missing or ID mismatched */
-  case 0x591dfa4:return 11; /* native operation cancelled */
- }
+ unsigned begin=slot==8?0:4,end=slot==8?4:11;
+ for(unsigned i=begin;i<end;i++)
+  if(rva==szero_bind_rva(origin_returns[i])) return (int)i+1;
  return 0;
 }
 static const char *origins[]={"none","create_request","set_header","set_raw_body",
  "unsupported_method","set_certificate_requirement","set_absolute_timeout","send_request",
  "zero_async_call","async_holder_error","missing_or_mismatched_request_holder","operation_cancelled"};
-static const uintptr_t origin_returns[11]={0x591ccde,0x591d089,0x591d25e,0x591e0be,
- 0x591d4d5,0x591d677,0x591d83c,0x591d989,0x591dba4,0x591de47,0x591dfa4};
-static const char expected[]="e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55";
+
 static int read_mem(uintptr_t p,void *out,SIZE_T n) {
  SIZE_T got=0;return p && n<=UINTPTR_MAX-p && ReadProcessMemory(GetCurrentProcess(),(void *)p,out,n,&got) && got==n;
 }
@@ -287,17 +276,7 @@ static void *hook_battle_result(uintptr_t instance,uintptr_t borrowed) {
  void *result=original_battle_result(instance,borrowed);
  leave_battle_result(t,readable,value);return result;
 }
-static int sha256(const wchar_t *path,char hex[65]) {
- HANDLE f=CreateFileW(path,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,NULL);
- BCRYPT_ALG_HANDLE alg=NULL;BCRYPT_HASH_HANDLE hash=NULL;unsigned char buf[65536],digest[32];DWORD n;int ok=0;
- if(f==INVALID_HANDLE_VALUE) return 0;
- if(BCryptOpenAlgorithmProvider(&alg,BCRYPT_SHA256_ALGORITHM,NULL,0)<0 || BCryptCreateHash(alg,&hash,NULL,0,NULL,0,0)<0) goto done;
- for(;;) {if(!ReadFile(f,buf,sizeof(buf),&n,NULL)) goto done;if(!n) break;if(BCryptHashData(hash,buf,n,0)<0) goto done;}
- if(BCryptFinishHash(hash,digest,32,0)<0) goto done;
- for(unsigned i=0;i<32;i++) sprintf(hex+2*i,"%02x",digest[i]);
- ok=1;
-done:if(hash) BCryptDestroyHash(hash);if(alg) BCryptCloseAlgorithmProvider(alg,0);CloseHandle(f);return ok;
-}
+
 static int flush(FILE *file) {
  LONG n=InterlockedCompareExchange(&written,0,0);
  while(consumed<(unsigned)n) {
@@ -315,13 +294,12 @@ static DWORD WINAPI worker(void *unused) {
  if(handle==INVALID_HANDLE_VALUE) {InterlockedExchange(&state,FAILED);return 0;}
  int fd=_open_osfhandle((intptr_t)handle,0);if(fd<0) {CloseHandle(handle);InterlockedExchange(&state,FAILED);return 0;}
  FILE *file=_fdopen(fd,"w");if(!file) {_close(fd);InterlockedExchange(&state,FAILED);return 0;}
- wchar_t path[32768];char hash[65];int valid=GetModuleFileNameW(NULL,path,32768) && sha256(path,hash);
-#ifndef SZERO_SERVICE_TRACE_TEST
- valid=valid && !strcmp(hash,expected);
-#else
- (void)expected;(void)offsets;(void)prefixes;
+ uintptr_t base=(uintptr_t)GetModuleHandleW(NULL);image_base=base;
+ int valid=szero_native_image(base,0) && szero_bindings_init(base);
+#ifdef SZERO_SERVICE_TRACE_TEST
+ (void)offsets;(void)prefixes;
 #endif
- uintptr_t base=(uintptr_t)GetModuleHandleW(NULL);image_base=base;IMAGE_DOS_HEADER dos;IMAGE_NT_HEADERS64 nt;
+ IMAGE_DOS_HEADER dos;IMAGE_NT_HEADERS64 nt;
  valid=valid && read_mem(base,&dos,sizeof(dos)) && dos.e_magic==IMAGE_DOS_SIGNATURE && dos.e_lfanew>0 &&
   (unsigned)dos.e_lfanew<1024*1024 && read_mem(base+(unsigned)dos.e_lfanew,&nt,sizeof(nt)) &&
   nt.Signature==IMAGE_NT_SIGNATURE && nt.OptionalHeader.Magic==IMAGE_NT_OPTIONAL_HDR64_MAGIC;
@@ -330,16 +308,16 @@ static DWORD WINAPI worker(void *unused) {
  active_hooks=GetEnvironmentVariableW(L"SZERO_LAN_NATIVE_SESSION3",backend_mode,4)==1 && backend_mode[0]==L'1'?17:HOOKS;
  for(unsigned i=0;valid && i<active_hooks;i++) {
 #ifndef SZERO_SERVICE_TRACE_TEST
-  entries[i]=base+offsets[i];unsigned char bytes[16];
-  valid=size>=16 && entries[i]>=base && entries[i]-base<=size-16 && read_mem(entries[i],bytes,16) && !memcmp(bytes,prefixes[i],16);
+  entries[i]=base+szero_bind_rva(offsets[i]);
+  valid=size>=16 && entries[i]>=base && entries[i]-base<=size-16 && szero_bind_prefix(base,offsets[i],prefixes[i],16);
 #else
   entries[i]=(uintptr_t)GetProcAddress((HMODULE)base,test_exports[i]);valid=entries[i]!=0;(void)size;
 #endif
  }
 #ifndef SZERO_SERVICE_TRACE_TEST
  for(unsigned i=0;valid && i<11;i++) {
-  unsigned char instruction[5];int32_t displacement=0;uintptr_t after=base+origin_returns[i];
-  valid=origin_returns[i]>=5 && origin_returns[i]<=size &&
+  unsigned char instruction[5];int32_t displacement=0;uintptr_t after=base+szero_bind_rva(origin_returns[i]);
+  valid=after>=base+5 && after-base<=size &&
    read_mem(after-5,instruction,5) && instruction[0]==0xe8;
   if(valid) {
    memcpy(&displacement,instruction+1,4);
@@ -349,8 +327,8 @@ static DWORD WINAPI worker(void *unused) {
 #else
  (void)origin_returns;
 #endif
- if(!valid) {fprintf(file,"{\"event\":\"refused\",\"reason\":\"unsupported_image_or_modified_probe_bytes\"}\n");fclose(file);InterlockedExchange(&state,FAILED);return 0;}
- fprintf(file,"{\"event\":\"header\",\"schema\":5,\"probe_revision\":\"postresult2\",\"sha256\":\"%s\",\"thread\":%lu,\"event_limit\":512,\"duration_ms\":%u,\"post_pair_extension_ms\":%u,\"pair_wait_ms\":%u,\"max_duration_ms\":%u,\"disk_patches\":false,\"mechanism\":\"temporary in-memory function wrappers\",\"coverage\":\"current game thread only; bounded recording; candidate_parent is inferred same-thread correlation\"}\n",hash,(unsigned long)game_thread,TRACE_MS,TRACE_MS,WAIT_MS,WAIT_MS+TRACE_MS);
+ if(!valid) {fprintf(file,"{\"event\":\"refused\",\"reason\":\"unsupported_image_or_modified_probe_bytes\",\"binding_error\":\"%s\"}\n",szero_bindings_error());fclose(file);InterlockedExchange(&state,FAILED);return 0;}
+ fprintf(file,"{\"event\":\"header\",\"schema\":6,\"probe_revision\":\"bindings1\",\"validation\":\"native_layout\",\"thread\":%lu,\"event_limit\":512,\"duration_ms\":%u,\"post_pair_extension_ms\":%u,\"pair_wait_ms\":%u,\"max_duration_ms\":%u,\"disk_patches\":false,\"mechanism\":\"temporary in-memory function wrappers\",\"coverage\":\"current game thread only; bounded recording; candidate_parent is inferred same-thread correlation\"}\n",(unsigned long)game_thread,TRACE_MS,TRACE_MS,WAIT_MS,WAIT_MS+TRACE_MS);
  if(fflush(file)) {fclose(file);InterlockedExchange(&state,FAILED);return 0;}
  MH_STATUS init=MH_Initialize();
  if(init!=MH_OK) {fprintf(file,"{\"event\":\"refused\",\"reason\":\"hook_initialization_failed\",\"status\":%d}\n",init);fclose(file);InterlockedExchange(&state,FAILED);return 0;}

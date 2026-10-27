@@ -209,7 +209,7 @@ int wmain(int argc,wchar_t **argv) {
         int (*start)(void *);FARPROC symbol=GetProcAddress(dll,"szero_backend_adapter");
         memcpy(&start,&symbol,sizeof(start));assert(start);
         assert(!start(NULL));Sleep(800);
-        puts("Unknown production image refused");return 0;
+        puts("Incompatible production layout refused");return 0;
     }
     unsigned char before[32],before_gate[32],before_result[32];
     memcpy(before_result,(void *)&fixture_battle_result,32);memcpy(before,(void *)&fixture_exchange,32);

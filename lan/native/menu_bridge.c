@@ -5,14 +5,14 @@
  */
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <bcrypt.h>
+#include "native_image.h"
+#include "native_bindings.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <wchar.h>
 
-static const char target_hash[]="e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55";
-static volatile LONG state; /* 0=new, 1=hashing, 2=verified, 3=failed */
+static volatile LONG state; /* 0=new, 1=validating, 2=verified, 3=failed */
 static uintptr_t image_base;
 static DWORD owner_thread;
 static unsigned long last_serial;
@@ -32,25 +32,7 @@ static void report(const char *status,const char *reason,unsigned long serial) {
         status,reason,GetCurrentProcessId(),serial);fclose(f); }
 }
 static DWORD WINAPI verify(void *keep_alive) {
-    wchar_t exe[32768]; BCRYPT_ALG_HANDLE alg=NULL; BCRYPT_HASH_HANDLE hash=NULL;
-    HANDLE file=INVALID_HANDLE_VALUE; unsigned char buffer[65536],digest[32];
-    DWORD count; char hex[65]; int valid=0;
-    if(!GetModuleFileNameW(NULL,exe,32768)) goto done;
-    file=CreateFileW(exe,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-        NULL,OPEN_EXISTING,FILE_FLAG_SEQUENTIAL_SCAN,NULL);
-    if(file==INVALID_HANDLE_VALUE) goto done;
-    if(BCryptOpenAlgorithmProvider(&alg,BCRYPT_SHA256_ALGORITHM,NULL,0)<0) goto done;
-    if(BCryptCreateHash(alg,&hash,NULL,0,NULL,0,0)<0) goto done;
-    for(;;) { if(!ReadFile(file,buffer,sizeof(buffer),&count,NULL)) goto done;
-        if(!count) break;
-        if(BCryptHashData(hash,buffer,count,0)<0) goto done; }
-    if(BCryptFinishHash(hash,digest,sizeof(digest),0)<0) goto done;
-    for(unsigned n=0;n<32;n++) sprintf(hex+n*2,"%02x",digest[n]);
-    valid=!strcmp(hex,target_hash);
-done:
-    if(hash) BCryptDestroyHash(hash);
-    if(alg) BCryptCloseAlgorithmProvider(alg,0);
-    if(file!=INVALID_HANDLE_VALUE) CloseHandle(file);
+    int valid=szero_native_image(image_base,0) && szero_bindings_init(image_base);
     InterlockedExchange(&state,valid?2:3);
     if(keep_alive) FreeLibraryAndExitThread((HMODULE)keep_alive,0);
     return 0;
@@ -85,17 +67,17 @@ static int validate(uintptr_t root,uintptr_t tree,const uintptr_t *buttons,unsig
 #ifdef SZERO_MENU_TEST
     root_class=1;button_class=2;
 #else
-    if(!read_memory(image_base+0x86f7360,&root_class,8) || !root_class ||
-       !read_memory(image_base+0x86f6b68,&button_class,8) || !button_class) return 0;
+    if(!read_memory(image_base+szero_bind_rva(0x86f7360),&root_class,8) || !root_class ||
+       !read_memory(image_base+szero_bind_rva(0x86f6b68),&button_class,8) || !button_class) return 0;
 #endif
     if(count<1 || count>8 || root==tree || (tree&7) ||
-        !object(root,image_base+0x6bc13e8,r,sizeof(r)) || u64(r+0x220)!=tree ||
+        !object(root,image_base+szero_bind_rva(0x6bc13e8),r,sizeof(r)) || u64(r+0x220)!=tree ||
         u64(r+0x10)!=root_class ||
         !read_memory(tree,t,sizeof(t)) || u64(t+0x20)!=root ||
         (u32(t+8)&0x60018030u) || !u64(t+0x10)) return 0;
     for(unsigned n=0;n<count;n++) {
         if(buttons[n]==root || buttons[n]==tree ||
-            !object(buttons[n],image_base+0x6bb0490,b,sizeof(b)) ||
+            !object(buttons[n],image_base+szero_bind_rva(0x6bb0490),b,sizeof(b)) ||
             u64(b+0x10)!=button_class || u64(b+0x20)!=tree) return 0;
         for(unsigned j=0;j<n;j++) if(buttons[j]==buttons[n]) return 0;
     }
@@ -105,7 +87,7 @@ static void bind_buttons(uintptr_t root,const uintptr_t *buttons,unsigned count)
 #ifdef SZERO_MENU_TEST
     (void)root;(void)buttons;fixture_bind_count+=count;
 #else
-    void (*bind_one)(void *,void *)=(void (*)(void *,void *))(image_base+0x2b380c0);
+    void (*bind_one)(void *,void *)=(void (*)(void *,void *))(image_base+szero_bind_rva(0x2b380c0));
     for(unsigned n=0;n<count;n++) bind_one((void *)root,(void *)buttons[n]);
 #endif
 }
@@ -114,7 +96,7 @@ static void consume(void) {
     unsigned long pid=0,serial=0; unsigned count=0;
     unsigned long long root=0,tree=0,raw[8]={0}; uintptr_t buttons[8]; char magic[20]={0};
     int valid=0;
-    if(!f) { report("ready","exact_build_verified",last_serial);return; }
+    if(!f) { report("ready","native_image_validated",last_serial);return; }
     if(fseek(f,0,SEEK_END)) goto done;
     long size=ftell(f);
     if(size<1 || size>512 || fseek(f,0,SEEK_SET)) goto done;
@@ -130,8 +112,7 @@ done:
     last_serial=serial;
     if(!validate((uintptr_t)root,(uintptr_t)tree,buttons,count)) { report("rejected","owned_widget_identity",serial);return; }
     static const unsigned char code[]={0x48,0x85,0xd2,0x0f,0x84,0x10,0x01,0,0,0x56,0x48,0x83,0xec,0x40};
-    unsigned char actual[sizeof(code)];
-    if(!read_memory(image_base+0x2b380c0,actual,sizeof(actual)) || memcmp(code,actual,sizeof(code))) {
+    if(!szero_bind_prefix(image_base,0x2b380c0,code,sizeof(code))) {
         report("rejected","native_binding_code_changed",serial);return;
     }
     bind_buttons((uintptr_t)root,buttons,count);
@@ -142,7 +123,7 @@ __declspec(dllexport) int szero_menu_bridge(void *lua_state) {
     LONG current=InterlockedCompareExchange(&state,1,0);
     if(current==0) {
         if(!prepare()) { InterlockedExchange(&state,3);return 0; }
-        report("hashing","verification_in_background",0);
+        report("validating","verification_in_background",0);
         HMODULE own=NULL;
         if(!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
             (const wchar_t *)(uintptr_t)&prepare,&own)) { InterlockedExchange(&state,3);return 0; }
@@ -150,20 +131,22 @@ __declspec(dllexport) int szero_menu_bridge(void *lua_state) {
         if(worker) CloseHandle(worker); else { FreeLibrary(own);InterlockedExchange(&state,3); }
     } else if(GetCurrentThreadId()!=owner_thread) report("rejected","wrong_calling_thread",0);
     else if(current==2) consume();
-    else if(current==3) report("unavailable","target_hash_mismatch_or_unreadable",0);
+    else if(current==3) report("unavailable","native_image_layout_unavailable",0);
     return 0;
 }
 #ifdef SZERO_MENU_TEST
 #include <assert.h>
 int main(void) {
     unsigned char root[0x228]={0},tree[0x28]={0},button[0x28]={0};
-    unsigned char binding_code[]={0x48,0x85,0xd2,0x0f,0x84,0x10,0x01,0,0,0x56,0x48,0x83,0xec,0x40};
+    /* A module-backed fixture buffer keeps the synthetic canonical base from
+     * wrapping below zero on Wine's low-address stack. */
+    static unsigned char binding_code[]={0x48,0x85,0xd2,0x0f,0x84,0x10,0x01,0,0,0x56,0x48,0x83,0xec,0x40};
     uintptr_t child=(uintptr_t)button; uint64_t n;
     image_base=(uintptr_t)binding_code-0x2b380c0;
-    n=image_base+0x6bc13e8;memcpy(root,&n,8);n=1;memcpy(root+0x10,&n,8);
+    n=image_base+szero_bind_rva(0x6bc13e8);memcpy(root,&n,8);n=1;memcpy(root+0x10,&n,8);
     n=(uintptr_t)tree;memcpy(root+0x220,&n,8);n=(uintptr_t)root;memcpy(tree+0x20,&n,8);
     n=1;memcpy(tree+0x10,&n,8);n=2;memcpy(button+0x10,&n,8);
-    n=image_base+0x6bb0490;memcpy(button,&n,8);n=(uintptr_t)tree;memcpy(button+0x20,&n,8);
+    n=image_base+szero_bind_rva(0x6bb0490);memcpy(button,&n,8);n=(uintptr_t)tree;memcpy(button+0x20,&n,8);
     assert(validate((uintptr_t)root,(uintptr_t)tree,&child,1));
     button[8]=0x10;assert(!validate((uintptr_t)root,(uintptr_t)tree,&child,1));button[8]=0;
     n=0;memcpy(button+0x20,&n,8);assert(!validate((uintptr_t)root,(uintptr_t)tree,&child,1));

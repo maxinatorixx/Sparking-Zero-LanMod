@@ -62,8 +62,8 @@ static int provider_default_normalize(uintptr_t service,unsigned *normalize) {
  if(!normalize || !read_mem(service,&owned,8) || !provider_owns(NULL,service,owned)) return 0;
  for(unsigned n=0;n<replacement_count;n++) if(replacements[n].object==service) {
   if(!read_mem(replacements[n].original+0x40,&target,8)) return 0;
-  if(target==base+0x11072d0) {*normalize=0;return 1;}
-  if(target==base+0x10fdcc0) {*normalize=1;return 1;}
+  if(target==base+szero_bind_rva(0x11072d0)) {*normalize=0;return 1;}
+  if(target==base+szero_bind_rva(0x10fdcc0)) {*normalize=1;return 1;}
   return 0;
  }
  return 0;
@@ -154,7 +154,7 @@ static int provider_host(uintptr_t service,SzeroStreamWire *stream,
  uintptr_t vt=0;if(!read_mem(service,&vt,8)) return 0;
  memset(host,0,sizeof(*host));host->image_base=base;host->service=service;
  host->expected_vptr=vt;host->native_thread_id=game_thread;
- host->exact_hash_verified=InterlockedCompareExchange(&verification,0,0)==2;
+ host->bindings_verified=InterlockedCompareExchange(&verification,0,0)==2;
  host->owns_vptr=provider_owns;
  int valid=szero_native_session_host_bind(host,stream,cb) && szero_native_session_host_ready(host);
 #endif
@@ -179,7 +179,7 @@ static void *provider_allocate(void *context,size_t bytes,size_t alignment) {
 #else
  SzeroNativeSessionHost *host=context;uintptr_t allocator=0,vt=0,target=0;
  MEMORY_BASIC_INFORMATION info;
- if(!szero_native_session_host_ready(host) || !read_mem(base+0x8cf7900,&allocator,8) ||
+ if(!szero_native_session_host_ready(host) || !read_mem(base+szero_bind_rva(0x8cf7900),&allocator,8) ||
   !read_mem(allocator,&vt,8) || !read_mem(vt+0x20,&target,8) ||
   !VirtualQuery((void *)target,&info,sizeof(info)) || info.State!=MEM_COMMIT ||
   info.Type!=MEM_IMAGE || (uintptr_t)info.AllocationBase!=base ||

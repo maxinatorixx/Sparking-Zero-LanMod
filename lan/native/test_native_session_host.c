@@ -17,7 +17,7 @@ int main(void) {
     h.image_base=(uintptr_t)GetModuleHandleW(NULL); h.service=1;
     h.expected_vptr=1; h.native_thread_id=GetCurrentThreadId(); h.owns_vptr=owns;
     assert(!szero_native_session_host_ready(&h) && h.last_error==SZERO_HOST_CONFIG);
-    h.exact_hash_verified=1; h.image_base++;
+    h.bindings_verified=1; h.image_base++;
     assert(!szero_native_session_host_ready(&h) && h.last_error==SZERO_HOST_IMAGE);
     h.image_base--; h.native_thread_id++;
     assert(!szero_native_session_host_ready(&h) && h.last_error==SZERO_HOST_THREAD);

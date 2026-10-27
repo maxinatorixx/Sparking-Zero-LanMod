@@ -6,15 +6,16 @@
 #define SZERO_NATIVE_SESSION_WIRE_H
 #include <stddef.h>
 #include <stdint.h>
+#include "native_bindings.h"
 
 #define SZERO_WIRE_MAX_NUMERIC 32
 #define SZERO_WIRE_MAX_STREAM 4096
 #define SZERO_WIRE_MAX_TEXT 255
-#define SZERO_STREAM_VTABLE_RVA ((uintptr_t)0x7b43f10)
-#define SZERO_VECTOR_STREAM_VTABLE_RVA ((uintptr_t)0x7b43960)
-#define SZERO_EMBEDDED_STREAM_VTABLE_RVA ((uintptr_t)0x6d15840)
-#define SZERO_INLINE64_STREAM_VTABLE_RVA ((uintptr_t)0x6d15df0)
-#define SZERO_VIEW_STREAM_VTABLE_RVA ((uintptr_t)0x6d36f80)
+#define SZERO_STREAM_VTABLE_RVA (szero_bind_rva((uintptr_t)0x7b43f10))
+#define SZERO_VECTOR_STREAM_VTABLE_RVA (szero_bind_rva((uintptr_t)0x7b43960))
+#define SZERO_EMBEDDED_STREAM_VTABLE_RVA (szero_bind_rva((uintptr_t)0x6d15840))
+#define SZERO_INLINE64_STREAM_VTABLE_RVA (szero_bind_rva((uintptr_t)0x6d15df0))
+#define SZERO_VIEW_STREAM_VTABLE_RVA (szero_bind_rva((uintptr_t)0x6d36f80))
 
 typedef struct {
     uint8_t present;
@@ -87,7 +88,7 @@ typedef struct {
 /* Exact two-member descriptor profile only. Finds the local member by the
  * legitimate source identity pair, NOT display name or an invented ID. Reads
  * the bounded native list and preserves original member flags. The caller
- * owns native-thread/lifecycle/hash guards; no native pointers escape here. */
+ * owns native-thread/lifecycle/binding guards; no native pointers escape here. */
 int szero_capture_local_member(uintptr_t descriptor, const SzeroIdentityWire *identity,
     SzeroWireRead read, void *user, SzeroMemberWire *output);
 

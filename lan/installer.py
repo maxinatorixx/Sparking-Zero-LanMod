@@ -154,12 +154,12 @@ def uninstall(game_root):
     return None
 
 
-def install(game_root, expected_exe):
+def install(game_root):
     root = Path(game_root).resolve()
     win64 = root / "SparkingZERO/Binaries/Win64"
     executable = win64 / "SparkingZERO-Win64-Shipping.exe"
-    if digest(executable) != expected_exe:
-        raise ValueError("Game executable differs from the analyzed build; nothing was installed.")
+    if not executable.is_file():
+        raise ValueError("Game executable is missing: " + str(executable))
 
     # Check the pinned archive before making any changes, even when reusing a loader.
     if digest(ARCHIVE_PATH) != ARCHIVE_SHA256:
@@ -200,11 +200,12 @@ def install(game_root, expected_exe):
 
     receipt = win64 / "SzeroLAN-install.json"
     previous = json.loads(receipt.read_text(encoding="utf-8")) if receipt.exists() else {
-        "format": 1, "game_exe_sha256": expected_exe, "transactions": []}
+        "format": 1, "transactions": []}
     if (not isinstance(previous, dict) or previous.get("format") != 1
             or not isinstance(previous.get("transactions"), list)):
         raise ValueError("Existing setup receipt is invalid; nothing was installed.")
     previous.pop("uninstalled", None)
+    previous.pop("game_exe_sha256", None)  # Legacy receipts remain uninstallable.
 
     # Preflight every target so directory conflicts cannot cause a partial install.
     for target in [*plan, receipt]:

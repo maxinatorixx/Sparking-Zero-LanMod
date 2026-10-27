@@ -93,7 +93,7 @@ class BackendAdapterTests(unittest.TestCase):
             records = [json.loads(line) for line in log.read_text().splitlines()]
             self.assertEqual(records[0]["event"], "ready")
             self.assertEqual(records[0]["schema"], 3)
-            self.assertEqual(records[0]["revision"], "ranked-result1")
+            self.assertEqual(records[0]["revision"], "ranked-bindings1")
             self.assertRegex(records[0]["time_utc"], r"^\d{4}-\d\d-\d\dT.*Z$")
             self.assertTrue(records[0]["card_route"])
             self.assertRegex(records[0]["helper_sha256"], r"^[0-9a-f]{64}$")
@@ -124,7 +124,7 @@ class BackendAdapterTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("remains unpatched for diagnostics", result.stdout)
             dll = folder / "backend_adapter.dll"
-            subprocess.run([*base, "-shared", str(native / "backend_adapter.c"),
+            subprocess.run([*base, "-shared", str(native / "backend_adapter.c"), str(native / "native_bindings.c"),
                             *(str(p) for p in common), "-o", str(dll), "-lbcrypt", "-lws2_32"],
                            check=True, capture_output=True)
             production_id = uuid.uuid4().hex
@@ -132,9 +132,11 @@ class BackendAdapterTests(unittest.TestCase):
             result = subprocess.run(["wine", str(exe), production_id, "production", windows_dll],
                                     capture_output=True, text=True, env=dict(os.environ, WINEDEBUG="-all", SZERO_LAN_MOD_LOGGING="1"), timeout=15)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertEqual([json.loads(line) for line in
-                              (folder / f"native_backend_adapter_{production_id}.jsonl").read_text().splitlines()],
-                             [{"event": "refused"}])
+            refusals = [json.loads(line) for line in
+                       (folder / f"native_backend_adapter_{production_id}.jsonl").read_text().splitlines()]
+            self.assertEqual(len(refusals), 1)
+            self.assertEqual(refusals[0]["event"], "refused")
+            self.assertIsInstance(refusals[0]["binding_error"], str)
 
 
 if __name__ == "__main__":

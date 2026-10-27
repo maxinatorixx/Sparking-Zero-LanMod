@@ -32,8 +32,8 @@ class ServiceTraceTests(unittest.TestCase):
                 log=Path(folder)/f"native_service_trace_{ident}.jsonl"
                 self.assertEqual(result.returncode,0,(result.stdout+result.stderr,log.read_text() if log.exists() else "no log"))
                 records=[json.loads(line) for line in log.read_text().splitlines()]
-                self.assertEqual(records[0]["schema"],5)
-                self.assertEqual(records[0]["probe_revision"], "postresult2")
+                self.assertEqual(records[0]["schema"],6)
+                self.assertEqual(records[0]["probe_revision"], "bindings1")
                 if mode=="operational":
                     self.assertIn("exclusive result setter ownership",result.stdout)
                     self.assertFalse(any(r['event'] in ('enter','return','native_battle_result') for r in records))
@@ -144,10 +144,10 @@ class ServiceTraceTests(unittest.TestCase):
                 self.assertEqual(len([r for r in returned if r["boundary"]=="backend_login"]),1)
                 self.assertEqual(len([r for r in returned if r["boundary"]=="login_response"]),1)
                 self.assertNotIn("deadbeef",log.read_text().lower())
-            # The ACTUAL production DLL must refuse this unknown executable,
+            # The ACTUAL production DLL must refuse this incompatible native layout,
             # never treating the test-only native export table as authorization.
             dll=Path(folder)/"service_trace.dll"
-            sources=[native/"service_trace.c",*(native/"vendor/minhook/src"/name for name in
+            sources=[native/"service_trace.c",native/"native_bindings.c",*(native/"vendor/minhook/src"/name for name in
                        ("buffer.c","hook.c","trampoline.c","hde/hde64.c"))]
             subprocess.run(["x86_64-w64-mingw32-gcc","-std=c11","-O2","-Wall","-Wextra","-Werror",
                             "-shared","-static-libgcc",*(str(p) for p in sources),"-o",str(dll),"-lbcrypt"],
@@ -163,7 +163,10 @@ class ServiceTraceTests(unittest.TestCase):
                                   env=dict(os.environ,WINEDEBUG="-all"),timeout=30)
             self.assertEqual(result.returncode,0,result.stdout+result.stderr)
             records=[json.loads(line) for line in (Path(folder)/f"native_service_trace_{ident}.jsonl").read_text().splitlines()]
-            self.assertEqual(records,[{"event":"refused","reason":"unsupported_image_or_modified_probe_bytes"}])
+            self.assertEqual(len(records),1)
+            self.assertEqual(records[0]["event"],"refused")
+            self.assertEqual(records[0]["reason"],"unsupported_image_or_modified_probe_bytes")
+            self.assertIsInstance(records[0]["binding_error"],str)
 
 if __name__=="__main__":
     unittest.main()

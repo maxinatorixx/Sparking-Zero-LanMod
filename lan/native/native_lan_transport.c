@@ -1,9 +1,8 @@
+#include "native_bindings.h"
 #include "native_lan_transport.h"
 #include <stdio.h>
 #include <string.h>
 
-const char szero_lan_transport_supported_sha256[] =
-    "e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55";
 _Static_assert(sizeof(uintptr_t) == 8, "Exact supported target is Win64");
 _Static_assert(sizeof(SzeroLanInlineString) == 32, "Native inline string");
 
@@ -21,11 +20,11 @@ static int inspect(const SzeroLanTransportHost *h, uintptr_t *context,
     if (!h->read(h->user,(addr),&(value),sizeof(value))) \
         return SZERO_LAN_TRANSPORT_READ_FAILED; \
 } while (0)
-    READ(h->image_base+0x8cf84f8,ctx);
+    READ(h->image_base+szero_bind_rva(0x8cf84f8),ctx);
     if (!ctx || (ctx & 7) || ctx > UINTPTR_MAX-0x19d7)
         return SZERO_LAN_TRANSPORT_IDENTITY;
     READ(ctx,pointer);
-    if (pointer != h->image_base+0x7ba1bf8)
+    if (pointer != h->image_base+szero_bind_rva(0x7ba1bf8))
         return SZERO_LAN_TRANSPORT_IDENTITY;
     READ(ctx+0x40,pointer);
     if (pointer) return SZERO_LAN_TRANSPORT_BUSY;
@@ -35,11 +34,11 @@ static int inspect(const SzeroLanTransportHost *h, uintptr_t *context,
     READ(ctx+0x65c,mode);
     if (mode != 2) return SZERO_LAN_TRANSPORT_MODE;
     READ(ctx+0x108,pointer);
-    if (pointer != h->image_base+0x7b8d640)
+    if (pointer != h->image_base+szero_bind_rva(0x7b8d640))
         return SZERO_LAN_TRANSPORT_IDENTITY;
     READ(pointer,slots);
     for (size_t i=0;i<12;++i)
-        if (slots[i] != h->image_base+channel_slots[i])
+        if (slots[i] != h->image_base+szero_bind_rva(channel_slots[i]))
             return SZERO_LAN_TRANSPORT_IDENTITY;
     /* Original channel+28 leaf145877fb0 reads channel+1b8 == ctx+2c0. */
     READ(ctx+0x2c0,channel_state);
@@ -57,7 +56,7 @@ int szero_lan_transport_prepare(const SzeroLanTransportHost *h,
     unsigned char flag, flag_again;
     int code;
     if (!h || !receipt || receipt->valid || !h->read || !h->compare_byte ||
-        !h->image_base || h->image_base > UINTPTR_MAX-0x8cf8500)
+        !h->image_base || h->image_base > UINTPTR_MAX-szero_bind_rva(0x8cf84f8)-8)
         return SZERO_LAN_TRANSPORT_ARGUMENT;
     if (h->exact_image_verified != 1 || h->on_native_thread != 1)
         return SZERO_LAN_TRANSPORT_HOST_GATE;

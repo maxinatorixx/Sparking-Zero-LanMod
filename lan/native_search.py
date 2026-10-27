@@ -20,6 +20,8 @@ from installer import atomic_write
 
 MAX_LINE = 8192
 MAX_SESSION_LINE = 16384
+# Historical layout/protocol partition, NOT a digest read from the game EXE.
+# Keep its value stable for existing compatible servers and native clients.
 SESSION_PARTITION = {"build": "e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55",
                      "protocol": 3, "mode": 0}
 LOG = logging.getLogger("szero_lan")

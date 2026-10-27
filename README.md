@@ -1,5 +1,9 @@
 # Sparking ZERO Arena
 
+**Tested with game v3020 and v3022.** Native bindings resolve compatible address
+relocations without game-EXE SHA restrictions. Changed or ambiguous native
+layouts still refuse safely.
+
 A community LAN multiplayer mod, standalone launcher, and self-hosted server
 for **DRAGON BALL: Sparking! ZERO**. Use the game's **Battle → Online** menus
 with your own Arena server for matchmaking, rooms, accounts and LAN rankings.
@@ -25,13 +29,24 @@ changes pass integration tests and still need verification in the actual game.
 ![Arena website with fighter profile and configurable artwork](docs/screenshots/website.png)
 
 ## Requirements
-- Windows, or Linux with Wine configured to run that installation.
+
+- Windows, or Linux with Wine configured to run the game.
 - Docker Engine/Desktop with Docker Compose on the server machine.
 - Matching Arena client/server versions and compatible game versions/settings.
 
 The release contains one-file Windows and Linux launchers. **Players do not
 need to install Python.** The server runs the game service, website and MariaDB
 inside one container. Linux still needs Wine to run the Windows game.
+
+Game selection, installation, launch and native helpers do **not** hash or
+allowlist the game executable. Native hooks still require a valid PE64 image,
+sufficient image bounds and matching instruction/pointer/ABI layouts. A game
+update can therefore still be incompatible even though its file hash is no
+longer checked. The resolver can follow similar future address relocations when
+the required patterns and referenced layouts remain compatible. Missing,
+ambiguous or changed bindings refuse safely; this does not promise support for
+every future patch. Static artifact tests do not replace two-PC game testing.
+Loader/mod/archive integrity checks remain enabled.
 
 ## Install and start the server
 
@@ -118,6 +133,7 @@ prevent a graceful disconnect message, so the server also handles socket loss.
 
 | Feature | Status |
 | --- | --- |
+| Game v3020 and v3022 | Tested. Mixed-version multiplayer remains unverified. |
 | Native casual quickmatch and actual battles | User-confirmed working. |
 | Ordinary lobby creation, joining and battles | User-confirmed working. |
 | Private-slot lobbies | Implemented; needs fresh end-to-end verification of all slot settings. |
@@ -214,8 +230,8 @@ that executable inherits your host's compatibility requirements.
 
 Native helper rebuilds require MinGW-w64; exact strict compiler commands are in
 [lan/native/README.md](lan/native/README.md). Rebuild the launchers after changing
-native payloads. Several helpers use instruction signatures and the known game
-hash; porting them requires verifying the new ABI/contracts, not changing a hash.
+native payloads. Helpers resolve reviewed instruction/reference patterns;
+changes to required ABI or object layouts still need review.
 
 Place **both** platform launchers in `.build/desktop/`, then run:
 
@@ -235,7 +251,7 @@ Some require Tk/Xvfb, MinGW, disposable Wine, native IPC fixtures, staged deskto
 binaries or an explicitly selected test Docker image. See the
 [code map](lan/README.md#tests) for opt-in fixture variables. Never point tests
 at a live game prefix or production database. The last full local validation
-passed 375 Python checks plus six Lua mocks, including legacy local checks not
+passed 381 Python checks plus six Lua mocks, including legacy local checks not
 shipped in the public source. This is not proof of every actual-game flow.
 
 ## Legal

@@ -37,7 +37,7 @@ force the game into battle.
 | `launcher_theme.py` | Colors, spacing, themed controls and icon helpers. |
 | `launcher_support.py` | Preferences, game command/environment, Wine settings and bridge commands. |
 | `account_client.py` | Bounded account requests over the game host/TCP port and scoped remembered sessions. |
-| `installer.py` | Build validation, pinned UE4SS extraction, payload hashes, ownership receipt and installation/removal. |
+| `installer.py` | Executable presence, pinned UE4SS extraction, payload hashes, ownership receipt and installation/removal. |
 | `lifecycle.py` | Parent lifetime pipe and stop signals; stops bridge when launcher disappears. |
 | `game_process.py` | Running-game checks before installation or save edits. |
 | `savegame.py`, `save_catalog.py` | Save envelope integrity/decoding/atomic writes and recognized unlock fields. UI supplies confirmation and backup. |
@@ -89,14 +89,19 @@ Installed under `SparkingZERO/Binaries/Win64/Mods/SzeroLAN/`, or the detected
 | `native/session_materializer.*` | Owned lists/strings/descriptors; capacity, ordering and exactly-one-owner checks. |
 | `native/native_lan_{identity,userinfo,transport}.*` | Peer identity/user-info projection and datagram/endpoint integration. |
 | `native/backend_adapter.c` | Exact-build backend seam, native responses, login/card/start/end/profile routes, Ranked gate and operational typed result capture. |
+| `native/native_image.h` | Loaded PE64/AMD64 image bounds and prefix validation, with no EXE disk hashing. |
+| `native/native_bindings.{h,c}`, `native/native_bindings_catalog.h` | Worker-side instruction/reference resolution for both reviewed game versions and compatible address relocations; no hash or global-offset guess. |
+| `generate_native_bindings.py`, `native/native_bindings_recipes.json` | Developer-only regeneration from explicitly supplied read-only executable references. The generated catalog ships with the source; building does not require game files. |
+| `build_native.py` | Rebuilds all six Win64 helper DLLs into a staging directory, without installing them into a game. |
 | `native/backend_response.*` | Portable bounded native response parsing/projection contracts. |
 | `native/service_trace.c` | Optional bounded original-call observer with ABI, thread/build/prefix and restoration guards. |
 | `native/vendor/minhook/` | Licensed hook library source. |
 | `native/*probe*.c`, `menu_bridge.c` | Earlier investigation tools; not needed to replace current Online menus. |
 
 Compiler commands and ABI notes: [native/README.md](native/README.md). Bundled
-DLLs remove the need for end-user compilers. Hash/prefix checks are intentional;
-recovered addresses are not portable to other game updates.
+DLLs remove the need for end-user compilers. Game-EXE SHA gates are removed. PE64/image bounds, instruction prefixes and
+pointer/ABI checks remain. Similar relocations can resolve automatically;
+changed or ambiguous native layouts still refuse safely.
 
 The operational backend owns `SetBattleResult`. It captures own Win1/Lose2/Draw3
 only within an issued round; a new code resets capture and valid end reporting

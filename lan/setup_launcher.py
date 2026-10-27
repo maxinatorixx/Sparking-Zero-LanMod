@@ -16,7 +16,6 @@ from account_client import authenticate, _valid_token
 
 from installer import atomic_write, install, uninstall, installed_runtime, digest
 from game_process import game_running
-from launcher import EXPECTED_EXE
 from szero_lan import label, load_config
 from launcher_support import (bridge_command, find_game_folder,
     game_arguments, game_command, game_environment, launch_options, preferences_path,
@@ -452,6 +451,10 @@ class SetupLauncher:
 
     def save_fields(self):
         if not self.selected_game():
+            folder = self.settings.get("game_directory")
+            if folder and (Path(folder) / "SparkingZERO.exe").is_file() and not (
+                    Path(folder) / "SparkingZERO/Binaries/Win64/SparkingZERO-Win64-Shipping.exe").is_file():
+                raise ValueError("Game executable is missing. Game was not launched.")
             raise ValueError("Select a valid game folder first.")
         if not Path(self.settings["game_directory"]).is_dir():
             raise ValueError("The saved game folder is unavailable. Select it again.")
@@ -514,8 +517,8 @@ class SetupLauncher:
             folder = Path(chosen).resolve()
             if not (folder / "SparkingZERO.exe").is_file():
                 raise ValueError("Select the game root containing SparkingZERO.exe")
-            if digest(folder / "SparkingZERO/Binaries/Win64/SparkingZERO-Win64-Shipping.exe") != EXPECTED_EXE:
-                raise ValueError("This game executable is not the supported build")
+            if not (folder / "SparkingZERO/Binaries/Win64/SparkingZERO-Win64-Shipping.exe").is_file():
+                raise ValueError("The selected game is missing its Win64 shipping executable")
             self.settings.pop("adapter_runtime", None)
             self.settings.update(game_directory=str(folder))
             self.game_directory.set(self.settings["game_directory"])
@@ -536,7 +539,7 @@ class SetupLauncher:
                 uninstall(folder)
                 self.status.set("Arena mod removed from this game.")
             else:
-                runtime = install(folder, EXPECTED_EXE)
+                runtime = install(folder)
                 self.settings["adapter_runtime"] = runtime
                 self.status.set("Arena mod installed. Configure the server and launch when ready.")
         except (OSError, ValueError, KeyError) as exc:
@@ -598,8 +601,8 @@ class SetupLauncher:
                 if not installed.is_file() or digest(installed) != digest(bundled):
                     raise ValueError("Account/card adapter is missing or outdated. Close the game, then uninstall and reinstall the Arena mod with this launcher.")
             shipping = game_root / "SparkingZERO/Binaries/Win64/SparkingZERO-Win64-Shipping.exe"
-            if digest(shipping) != EXPECTED_EXE:
-                raise ValueError("Game executable differs from the supported native build. Game was not launched.")
+            if not shipping.is_file():
+                raise ValueError("Game executable is missing. Game was not launched.")
             options=launch_options(cfg.get("launch_options"))
             trace_enabled = options["mod_logging"]
             if trace_enabled:

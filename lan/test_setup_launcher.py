@@ -154,6 +154,26 @@ class ConnectionConfigTests(unittest.TestCase):
 
 @unittest.skipUnless(os.name == "nt" or os.getenv("DISPLAY"), "requires display or Xvfb")
 class SetupWindowTests(unittest.TestCase):
+    def test_select_game_accepts_unrelated_executable_without_hashing(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            (folder / "SparkingZERO.exe").write_bytes(b"launcher fixture")
+            shipping = folder / "SparkingZERO/Binaries/Win64/SparkingZERO-Win64-Shipping.exe"
+            shipping.parent.mkdir(parents=True)
+            shipping.write_bytes(b"unrelated executable bytes")
+            root = tk.Tk()
+            try:
+                ui = setup_launcher.SetupLauncher(root, folder / "prefs.json")
+                with patch.object(setup_launcher.filedialog, "askdirectory", return_value=str(folder)), \
+                     patch.object(setup_launcher, "digest", side_effect=AssertionError("Selection must not hash EXE")), \
+                     patch.object(setup_launcher.messagebox, "showerror") as error:
+                    ui.select_game()
+                error.assert_not_called()
+                self.assertEqual(ui.selected_game(), True)
+                self.assertEqual(ui.settings["game_directory"], str(folder.resolve()))
+            finally:
+                root.destroy()
+
     def test_player_tabs_keep_equal_geometry_and_display_fields_are_absent(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = tk.Tk()
@@ -272,10 +292,7 @@ class SetupWindowTests(unittest.TestCase):
                     self.assertEqual(json.loads(settings.read_text())["game_directory"],str(folder))
                     started.append(args)
                     return bridge if len(started)==1 else MagicMock()
-                with patch.dict(os.environ, {"SZERO_LAN_NATIVE_TRACE": "1"}), \
-                     patch.object(setup_launcher, "EXPECTED_EXE", expected), \
-                     patch.object(setup_launcher, "probe_native_server"), \
-                     patch.object(setup_launcher.subprocess, "Popen", side_effect=start_process) as popen:
+                with patch.dict(os.environ, {'SZERO_LAN_NATIVE_TRACE': '1'}), patch.object(setup_launcher, 'probe_native_server'), patch.object(setup_launcher.subprocess, 'Popen', side_effect=start_process) as popen:
                     ui.launch()
                 self.assertEqual(popen.call_count, 2)
                 headless, game = popen.call_args_list
@@ -354,9 +371,7 @@ class SetupWindowTests(unittest.TestCase):
                 self.assertEqual(config.read_bytes(), original)
                 ui.bridge = None
                 # Launch saves before preflight, even when the server is offline.
-                with patch.object(setup_launcher,"probe_native_server",side_effect=ValueError("offline")), \
-                     patch.object(setup_launcher,"EXPECTED_EXE",hashlib.sha256(b"owned shipping test fixture").hexdigest()), \
-                     patch.object(setup_launcher.messagebox,"showerror"):
+                with patch.object(setup_launcher, 'probe_native_server', side_effect=ValueError('offline')), patch.object(setup_launcher.messagebox, 'showerror'):
                     ui.launch()
                 self.assertEqual(json.loads(config.read_text())["server_host"], "new-server")
                 self.assertEqual(json.loads(config.read_text())["extra"], 7)
@@ -375,9 +390,7 @@ class SetupWindowTests(unittest.TestCase):
             root = tk.Tk()
             try:
                 ui = setup_launcher.SetupLauncher(root, settings)
-                with patch.object(setup_launcher.filedialog, "askdirectory", return_value=str(folder)), \
-                     patch.object(setup_launcher, "EXPECTED_EXE", expected), \
-                     patch.object(setup_launcher, "install") as install:
+                with patch.object(setup_launcher.filedialog, 'askdirectory', return_value=str(folder)), patch.object(setup_launcher, 'install') as install:
                     ui.select_game()
                     install.assert_not_called()
                 self.assertEqual(ui.host.get(), "selected-pc")
@@ -404,9 +417,7 @@ class SetupWindowTests(unittest.TestCase):
             try:
                 ui = setup_launcher.SetupLauncher(root, settings)
                 (folder / "SzeroLAN.json").write_text('{"server_host":"localhost","native_menu":true}')
-                with patch.object(setup_launcher.subprocess, "Popen") as popen, \
-                     patch.object(setup_launcher, "EXPECTED_EXE", expected), \
-                     patch.object(setup_launcher, "probe_native_server"):
+                with patch.object(setup_launcher.subprocess, 'Popen') as popen, patch.object(setup_launcher, 'probe_native_server'):
                     ui.launch()
                 self.assertEqual(popen.call_count, 2)
                 self.assertEqual(popen.call_args.kwargs["env"]["SZERO_LAN_NATIVE_MENU"], "0")
@@ -465,9 +476,7 @@ class SetupWindowTests(unittest.TestCase):
                     (scripts / missing).write_bytes((setup_launcher.ROOT / "ue4ss/SzeroLAN/scripts" / missing).read_bytes())
                 expected = native_fixture(folder)
                 # No panel/native-menu files are required: this path uses the original menu.
-                with patch.object(setup_launcher.subprocess, "Popen") as popen, \
-                     patch.object(setup_launcher, "EXPECTED_EXE", expected), \
-                     patch.object(setup_launcher, "probe_native_server"):
+                with patch.object(setup_launcher.subprocess, 'Popen') as popen, patch.object(setup_launcher, 'probe_native_server'):
                     ui.launch()
                 self.assertEqual(popen.call_count, 2)
                 self.assertEqual(popen.call_args.kwargs["env"]["SZERO_LAN_NATIVE_SEARCH"], "1")
@@ -506,24 +515,20 @@ class SetupWindowTests(unittest.TestCase):
                 (scripts / "native_search.dll").write_bytes(current)
                 shipping = folder / "SparkingZERO/Binaries/Win64/SparkingZERO-Win64-Shipping.exe"
                 shipping.parent.mkdir(parents=True, exist_ok=True)
-                shipping.write_bytes(b"owned shipping test fixture")
+                shipping.unlink()
                 with patch.object(setup_launcher.subprocess, "Popen") as popen, \
                      patch.object(setup_launcher, "probe_native_server") as probe, \
                      patch.object(setup_launcher.messagebox, "showerror") as error:
                     ui.launch()
                 popen.assert_not_called()
                 probe.assert_not_called()
-                self.assertIn("supported native build", error.call_args.args[1])
-                with patch.object(setup_launcher.subprocess, "Popen") as popen, \
-                     patch.object(setup_launcher, "probe_native_server", side_effect=ValueError("server unavailable")), \
-                     patch.object(setup_launcher, "EXPECTED_EXE", hashlib.sha256(shipping.read_bytes()).hexdigest()), \
-                     patch.object(setup_launcher.messagebox, "showerror") as error:
+                self.assertIn("executable is missing", error.call_args.args[1])
+                shipping.write_bytes(b"different executable bytes accepted at launch")
+                with patch.object(setup_launcher.subprocess, 'Popen') as popen, patch.object(setup_launcher, 'probe_native_server', side_effect=ValueError('server unavailable')), patch.object(setup_launcher.messagebox, 'showerror') as error:
                     ui.launch()
                 popen.assert_not_called()
                 self.assertIn("server unavailable", error.call_args.args[1])
-                with patch.object(setup_launcher.subprocess, "Popen") as popen, \
-                     patch.object(setup_launcher, "probe_native_server") as probe, \
-                     patch.object(setup_launcher, "EXPECTED_EXE", hashlib.sha256(shipping.read_bytes()).hexdigest()):
+                with patch.object(setup_launcher.subprocess, 'Popen') as popen, patch.object(setup_launcher, 'probe_native_server') as probe:
                     ui.launch()
                 probe.assert_called_once()
                 self.assertEqual(popen.call_count, 2)

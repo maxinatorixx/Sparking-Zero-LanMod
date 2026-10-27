@@ -9,7 +9,8 @@ def verify(executable):
     scripts=root/'ue4ss/SzeroLAN/scripts'
     files=[scripts/name for name in ('main.lua','native_search.lua','native_menu.lua',
         'panel.lua','audit.lua','session_trace.lua','backend_adapter.dll',
-        'native_search.dll','service_trace.dll')]
+        'native_search.dll','service_trace.dll','console_probe.dll',
+        'menu_bridge.dll','session_probe.dll')]
     files += [root/'vendor/MinHook-LICENSE.txt',root/'vendor/UE4SS_v3.0.1.zip']
     archive=CArchiveReader(str(executable))
     names={name.replace('\\','/'):name for name in archive.toc}

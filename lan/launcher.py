@@ -14,11 +14,10 @@ from szero_lan import LobbyClient, configure_logging, load_config
 from installer import install as install_game_files
 
 ROOT = Path(__file__).resolve().parent
-EXPECTED_EXE = "e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55"
 
 
 def install_adapter(game_root):
-    return install_game_files(game_root, EXPECTED_EXE)
+    return install_game_files(game_root)
 
 
 class Launcher:

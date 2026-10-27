@@ -95,7 +95,6 @@ enum {
     SZERO_MATERIALIZE_NATIVE_RESULT = 4
 };
 
-extern const char szero_materializer_supported_sha256[];
 /* output must be empty/unowned on entry. Rejections do not touch it. After
  * factory invocation it belongs to the caller even on a native error result.
  * The factory must deep-copy before returning, as exact-build145943940 does.

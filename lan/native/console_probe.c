@@ -1,17 +1,17 @@
 /* Exact-build, read-only console registration audit. No engine function calls,
  * hooks, writes to game memory, sockets, platform calls or Lua API dependency.
  * szero_console_probe is a Lua C function: ignores lua_State*, returns 0 values.
- * Call from ExecuteInGameThread; hashing runs separately before memory reads.
+ * Call from ExecuteInGameThread; validating runs separately before memory reads.
  */
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <bcrypt.h>
+#include "native_image.h"
+#include "native_bindings.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <wchar.h>
 
-static const char expected_hash[] = "e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55";
 static const wchar_t *names[] = {
     L"spn.multiplayerContext.contextMode",
     L"spn.multiplayerContext.contextMode.value",
@@ -24,7 +24,7 @@ static const wchar_t *names[] = {
     L"spn.multiplayerContext.apply",
     L"spn.multiplayerContext.apply.exec",
 };
-static volatile LONG state; /* 0=new, 1=hashing, 2=verified, 3=failed, 4=reported */
+static volatile LONG state; /* 0=new, 1=validating, 2=verified, 3=failed, 4=reported */
 static wchar_t output_path[32768];
 static uintptr_t image_base;
 
@@ -45,34 +45,9 @@ static void failure(const char *reason) {
 }
 
 static DWORD WINAPI verify_image(void *unused) {
-    wchar_t exe[32768];
-    BCRYPT_ALG_HANDLE alg = NULL;
-    BCRYPT_HASH_HANDLE hash = NULL;
-    unsigned char digest[32], buffer[65536];
-    char hex[65];
-    HANDLE file = INVALID_HANDLE_VALUE;
-    DWORD count;
-    int valid = 0;
-    if (!GetModuleFileNameW(NULL, exe, 32768)) goto done;
-    file = CreateFileW(exe, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-    if (file == INVALID_HANDLE_VALUE) goto done;
-    if (BCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA256_ALGORITHM, NULL, 0) < 0) goto done;
-    if (BCryptCreateHash(alg, &hash, NULL, 0, NULL, 0, 0) < 0) goto done;
-    for (;;) {
-        if (!ReadFile(file, buffer, sizeof(buffer), &count, NULL)) goto done;
-        if (!count) break;
-        if (BCryptHashData(hash, buffer, count, 0) < 0) goto done;
-    }
-    if (BCryptFinishHash(hash, digest, sizeof(digest), 0) < 0) goto done;
-    for (unsigned n=0;n<32;n++) sprintf(hex+n*2,"%02x",digest[n]);
-    valid = !strcmp(hex, expected_hash);
-done:
-    if (hash) BCryptDestroyHash(hash);
-    if (alg) BCryptCloseAlgorithmProvider(alg, 0);
-    if (file != INVALID_HANDLE_VALUE) CloseHandle(file);
-    InterlockedExchange(&state, valid ? 2 : 3);
-    if (unused) FreeLibraryAndExitThread((HMODULE)unused,0);
+    int valid=szero_native_image(image_base,0) && szero_bindings_init(image_base);
+    InterlockedExchange(&state,valid?2:3);
+    if(unused) FreeLibraryAndExitThread((HMODULE)unused,0);
     return 0;
 }
 
@@ -107,9 +82,9 @@ static void snapshot(void) {
     unsigned occupied=0, read_names=0, invalid=0, spn_count=0;
     int control=0;
     unsigned char *entries=NULL, *flags=NULL;
-    if (!read_memory(image_base+0x8739b48,&manager,sizeof(manager)) ||
+    if (!read_memory(image_base+szero_bind_rva(0x8739b48),&manager,sizeof(manager)) ||
         !read_memory(manager,header,sizeof(header)) ||
-        u64(header) != image_base+0x6dc03c0) { failure("console_manager_identity"); return; }
+        u64(header) != image_base+szero_bind_rva(0x6dc03c0)) { failure("console_manager_identity"); return; }
     slots=i32(header+0x10); capacity=i32(header+0x14);
     bit_count=i32(header+0x30); bit_capacity=i32(header+0x34); free_count=i32(header+0x3c);
     if (slots<0 || slots>capacity || capacity>65536 || bit_count!=slots ||
@@ -156,10 +131,10 @@ static void snapshot(void) {
     }
     FILE *f=_wfopen(output_path,L"wb");
     if (!f) goto done;
-    fprintf(f,"{\"version\":1,\"status\":\"snapshot\",\"target_sha256\":\"%s\",\"pid\":%lu,"
+    fprintf(f,"{\"version\":1,\"status\":\"snapshot\",\"validation\":\"native_layout\",\"pid\":%lu,"
         "\"slots\":%d,\"occupied\":%u,\"names_read\":%u,\"invalid_names\":%u,\"spn_count\":%u,"
         "\"control_present\":%s,\"consistent_header\":true,\"complete_occupied_read\":%s,\"registered\":{",
-        expected_hash,GetCurrentProcessId(),slots,occupied,read_names,invalid,spn_count,
+        GetCurrentProcessId(),slots,occupied,read_names,invalid,spn_count,
         control?"true":"false", occupied==(unsigned)(slots-free_count) && read_names==occupied && control?"true":"false");
     for (unsigned j=0;j<sizeof(names)/sizeof(names[0]);j++)
         fprintf(f,"%s\"%ls\":%s",j?",":"",names[j],present[j]?"true":"false");
@@ -181,10 +156,10 @@ __declspec(dllexport) int szero_console_probe(void *lua_state) {
             failure("module_lifetime"); InterlockedExchange(&state,4); return 0;
         }
         HANDLE worker=CreateThread(NULL,0,verify_image,keep_alive,0,NULL);
-        if (!worker) { FreeLibrary(keep_alive); failure("hash_worker"); InterlockedExchange(&state,4); }
+        if (!worker) { FreeLibrary(keep_alive); failure("validation_worker"); InterlockedExchange(&state,4); }
         else CloseHandle(worker);
     } else if (current==2 && InterlockedCompareExchange(&state,4,2)==2) snapshot();
-    else if (current==3 && InterlockedCompareExchange(&state,4,3)==3) failure("target_hash_mismatch_or_unreadable");
+    else if (current==3 && InterlockedCompareExchange(&state,4,3)==3) failure("native_image_layout_unavailable");
     return 0;
 }
 
@@ -196,7 +171,7 @@ int main(void) {
     unsigned char header[0x58]={0}, entries[3*32]={0};
     uintptr_t manager=(uintptr_t)header;
     image_base=(uintptr_t)&manager-0x8739b48;
-    uint64_t vtable=image_base+0x6dc03c0, data=(uintptr_t)entries;
+    uint64_t vtable=image_base+szero_bind_rva(0x6dc03c0), data=(uintptr_t)entries;
     int32_t count=3;
     wchar_t temp[MAX_PATH];
     assert(GetTempPathW(MAX_PATH,temp));
@@ -226,11 +201,11 @@ int main(void) {
     assert(strstr(result,"console_registry_bounds"));
     assert(!read_memory(1,result,8));
     verify_image(NULL);
-    assert(state==3 && "fixture EXE must not pass the game identity guard");
+    assert(state==3 && "synthetic registry base is not a valid PE64 image");
     szero_console_probe(NULL);
     f=_wfopen(output_path,L"rb"); assert(f); memset(result,0,sizeof(result));
     assert(fread(result,1,sizeof(result)-1,f)>0); fclose(f);
-    assert(strstr(result,"target_hash_mismatch_or_unreadable"));
+    assert(strstr(result,"native_image_layout_unavailable"));
     assert(DeleteFileW(output_path));
     puts("Native console registry fixture and bounds tests passed (not a game test)");
     return 0;

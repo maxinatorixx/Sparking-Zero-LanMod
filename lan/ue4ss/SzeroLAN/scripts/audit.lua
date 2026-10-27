@@ -48,7 +48,7 @@ return function(folder, instance)
                 if data:find('"status":"unavailable"',1,true) then
                     done, detail = true, " | Console audit: " .. (data:match('"reason":"([a-z_]+)"') or "unavailable")
                 elseif data:find('"status":"snapshot"',1,true) and
-                    data:find('"target_sha256":"e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55"',1,true) then
+                    data:find('"validation":"native_layout"',1,true) then
                     local found = 0
                     for _, name in ipairs(expected) do
                         if data:find('"spn.multiplayerContext.' .. name .. '":true',1,true) then found = found + 1 end

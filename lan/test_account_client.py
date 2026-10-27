@@ -156,7 +156,7 @@ class AccountLauncherTests(unittest.TestCase):
                 self.assertEqual(json.loads(settings.read_text())["account"]["token"], TOKEN)
                 started.append(kwargs)
                 return bridge if len(started) == 1 else MagicMock()
-            with patch.object(setup_launcher, "authenticate", return_value=(TOKEN, PROFILE)) as auth, patch.object(setup_launcher, "EXPECTED_EXE", expected), patch.object(setup_launcher, "probe_native_server"), patch.object(setup_launcher.subprocess, "Popen", side_effect=spawn):
+            with patch.object(setup_launcher, 'authenticate', return_value=(TOKEN, PROFILE)) as auth, patch.object(setup_launcher, 'probe_native_server'), patch.object(setup_launcher.subprocess, 'Popen', side_effect=spawn):
                 ui.launch()
             auth.assert_called_once_with("localhost", 27150, "vegeta", "", TOKEN)
             self.assertEqual(started[0]["env"]["SZERO_ARENA_ACCOUNT_TOKEN"], TOKEN)
@@ -191,10 +191,7 @@ class AccountLauncherTests(unittest.TestCase):
                 self.assertEqual(kwargs["env"]["SZERO_LAN_MOD_LOGGING"], "0")
                 order.append("spawn")
                 return bridge if len(order) == 2 else MagicMock()
-            with patch.object(setup_launcher, "authenticate", side_effect=check_credentials) as auth, \
-                 patch.object(setup_launcher, "EXPECTED_EXE", expected), \
-                 patch.object(setup_launcher, "probe_native_server"), \
-                 patch.object(setup_launcher.subprocess, "Popen", side_effect=spawn):
+            with patch.object(setup_launcher, 'authenticate', side_effect=check_credentials) as auth, patch.object(setup_launcher, 'probe_native_server'), patch.object(setup_launcher.subprocess, 'Popen', side_effect=spawn):
                 ui.launch()
             auth.assert_called_once()
             self.assertEqual(order, ["login", "spawn", "spawn"])
@@ -248,7 +245,7 @@ class AccountLauncherTests(unittest.TestCase):
         with self.launcher() as (ui, folder, settings, expected):
             dll = folder / "scripts/backend_adapter.dll"
             dll.write_bytes(b"outdated backend3")
-            with patch.object(setup_launcher, "EXPECTED_EXE", expected), patch.object(setup_launcher, "probe_native_server") as probe, patch.object(setup_launcher.subprocess, "Popen") as spawn, patch.object(setup_launcher.messagebox, "showerror") as error:
+            with patch.object(setup_launcher, 'probe_native_server') as probe, patch.object(setup_launcher.subprocess, 'Popen') as spawn, patch.object(setup_launcher.messagebox, 'showerror') as error:
                 ui.launch()
             self.assertIn("reinstall", error.call_args.args[1])
             probe.assert_not_called()

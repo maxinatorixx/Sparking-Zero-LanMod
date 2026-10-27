@@ -5,14 +5,14 @@
  */
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <bcrypt.h>
+#include "native_image.h"
+#include "native_bindings.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <wchar.h>
 
-static const char expected_hash[]="e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55";
-static volatile LONG state; /* 0 new, 1 hashing, 2 verified, 3 failed, 4 stopped */
+static volatile LONG state; /* 0 new, 1 validating, 2 verified, 3 failed, 4 stopped */
 static uintptr_t image_base;
 static wchar_t output_path[32768];
 static DWORD owner_thread;
@@ -46,11 +46,11 @@ static int read_memory(uintptr_t address,void *out,SIZE_T bytes) {
 static Sample take_sample(uintptr_t base) {
     Sample s={0}; uintptr_t context=0,after=0,vtable=0,after_vtable=0,session=0;
     s.reason="context_pointer_unreadable";
-    if (!read_memory(base+0x8cf84f8,&context,8)) return s;
+    if (!read_memory(base+szero_bind_rva(0x8cf84f8),&context,8)) return s;
     if (!context) { s.reason="context_absent"; return s; }
     s.reason="context_identity_unreadable";
     if (!read_memory(context,&vtable,8)) return s;
-    if (vtable!=base+0x7ba1bf8) { s.reason="context_identity_mismatch"; return s; }
+    if (vtable!=base+szero_bind_rva(0x7ba1bf8)) { s.reason="context_identity_mismatch"; return s; }
     s.reason="context_fields_unreadable";
 #define READ_FIELD(offset, destination) if (!read_memory(context+(offset),&(destination),sizeof(destination))) return s
     READ_FIELD(0x40,session);
@@ -64,7 +64,7 @@ static Sample take_sample(uintptr_t base) {
     READ_FIELD(0x19d6,s.task_19d6);
 #undef READ_FIELD
     s.reason="context_changed_during_read";
-    if (!read_memory(base+0x8cf84f8,&after,8) || after!=context ||
+    if (!read_memory(base+szero_bind_rva(0x8cf84f8),&after,8) || after!=context ||
         !read_memory(context,&after_vtable,8) || after_vtable!=vtable) return s;
     s.available=1; s.session_present=session!=0; s.reason="snapshot";
     return s;
@@ -84,9 +84,9 @@ static int append_sample(const Sample *s) {
     if (records>=256) return 0;
     FILE *f=_wfopen(output_path,L"ab"); if (!f) return 0;
     fprintf(f,"{\"version\":1,\"utc\":\"%04u-%02u-%02uT%02u:%02u:%02u.%03uZ\","
-        "\"tick_ms\":%llu,\"pid\":%lu,\"target_sha256\":\"%s\",\"available\":%s,\"reason\":\"%s\"",
+        "\"tick_ms\":%llu,\"pid\":%lu,\"validation\":\"native_layout\",\"available\":%s,\"reason\":\"%s\"",
         t.wYear,t.wMonth,t.wDay,t.wHour,t.wMinute,t.wSecond,t.wMilliseconds,
-        (unsigned long long)GetTickCount64(),GetCurrentProcessId(),expected_hash,
+        (unsigned long long)GetTickCount64(),GetCurrentProcessId(),
         s->available?"true":"false",s->reason);
     if (s->available) fprintf(f,",\"consistent_identity\":true,\"session_present\":%s,\"field_63c_raw\":%ld,"
         "\"mode_65c_raw\":%lu,\"field_661_raw\":%u,\"field_662_raw\":%u,\"field_663_raw\":%u,"
@@ -104,27 +104,9 @@ static void stop_reason(const char *reason) {
 }
 
 static DWORD WINAPI verify_image(void *module) {
-    wchar_t exe[32768]; BCRYPT_ALG_HANDLE alg=NULL; BCRYPT_HASH_HANDLE hash=NULL;
-    HANDLE file=INVALID_HANDLE_VALUE; unsigned char digest[32],buffer[65536];
-    DWORD count; char hex[65]; int valid=0;
-    if (!GetModuleFileNameW(NULL,exe,32768)) goto done;
-    file=CreateFileW(exe,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_FLAG_SEQUENTIAL_SCAN,NULL);
-    if (file==INVALID_HANDLE_VALUE || BCryptOpenAlgorithmProvider(&alg,BCRYPT_SHA256_ALGORITHM,NULL,0)<0 ||
-        BCryptCreateHash(alg,&hash,NULL,0,NULL,0,0)<0) goto done;
-    for (;;) {
-        if (!ReadFile(file,buffer,sizeof(buffer),&count,NULL)) goto done;
-        if (!count) break;
-        if (BCryptHashData(hash,buffer,count,0)<0) goto done;
-    }
-    if (BCryptFinishHash(hash,digest,32,0)<0) goto done;
-    for (unsigned i=0;i<32;i++) sprintf(hex+2*i,"%02x",digest[i]);
-    valid=!strcmp(hex,expected_hash);
-done:
-    if (hash) BCryptDestroyHash(hash);
-    if (alg) BCryptCloseAlgorithmProvider(alg,0);
-    if (file!=INVALID_HANDLE_VALUE) CloseHandle(file);
+    int valid=szero_native_image(image_base,0) && szero_bindings_init(image_base);
     InterlockedExchange(&state,valid?2:3);
-    if (module) FreeLibraryAndExitThread((HMODULE)module,0);
+    if(module) FreeLibraryAndExitThread((HMODULE)module,0);
     return 0;
 }
 
@@ -151,13 +133,13 @@ __declspec(dllexport) int szero_session_probe(void *lua_state) {
         HMODULE keep_alive=NULL;
         if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,(const wchar_t *)(uintptr_t)&prepare,&keep_alive)) { stop_reason("module_lifetime"); return 0; }
         HANDLE worker=CreateThread(NULL,0,verify_image,keep_alive,0,NULL);
-        if (!worker) { FreeLibrary(keep_alive);stop_reason("hash_worker"); }
+        if (!worker) { FreeLibrary(keep_alive);stop_reason("validation_worker"); }
         else CloseHandle(worker);
         return 0;
     }
     if (current==1 || current==4) return 0;
     if (GetCurrentThreadId()!=owner_thread) return 0; /* no snapshot on another thread */
-    if (current==3) { stop_reason("target_hash_mismatch_or_unreadable"); return 0; }
+    if (current==3) { stop_reason("native_image_layout_unavailable"); return 0; }
     ULONGLONG now=GetTickCount64();
     if (!started) started=now;
     if (polls>=300 || now-started>=300000 || records>=255) { stop_reason("capture_limit_reached"); return 0; }
@@ -175,7 +157,7 @@ __declspec(dllexport) int szero_session_probe(void *lua_state) {
 #include <assert.h>
 int main(void) {
     unsigned char *context=VirtualAlloc(NULL,0x3000,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);assert(context);
-    uintptr_t global=(uintptr_t)context,base=(uintptr_t)&global-0x8cf84f8,vt=base+0x7ba1bf8;
+    uintptr_t global=(uintptr_t)context,base=(uintptr_t)&global-0x8cf84f8,vt=base+szero_bind_rva(0x7ba1bf8);
     memcpy(context,&vt,8); uintptr_t session=123;memcpy(context+0x40,&session,8);
     int32_t field=-5;memcpy(context+0x63c,&field,4);context[0x65c]=3;context[0x667]=7;context[0x19d6]=9;
     read_count=0;Sample s=take_sample(base);assert(s.available && s.session_present && s.field_63c==-5 && s.mode_65c==3 && s.field_667==7 && s.task_19d6==9);assert(read_count==13);

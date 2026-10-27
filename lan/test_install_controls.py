@@ -1,5 +1,4 @@
 """Reversible own-mod controls never uninstall shared loaders or other mods."""
-import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -17,13 +16,12 @@ class InstallControlTests(unittest.TestCase):
         self.win64.mkdir(parents=True)
         self.exe = self.win64 / "SparkingZERO-Win64-Shipping.exe"
         self.exe.write_bytes(b"synthetic supported game for installer tests")
-        self.expected = hashlib.sha256(self.exe.read_bytes()).hexdigest()
 
     def tearDown(self):
         self.temporary.cleanup()
 
     def install(self):
-        return Path(installer.install(self.root, self.expected))
+        return Path(installer.install(self.root))
 
     def test_empty_selection_has_no_enabled_mod(self):
         self.assertIsNone(installer.installed_runtime(self.root))

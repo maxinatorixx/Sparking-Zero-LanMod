@@ -39,7 +39,6 @@ enum {
     SZERO_LAN_TRANSPORT_MODE = 6,
     SZERO_LAN_TRANSPORT_CHANGED = 7
 };
-extern const char szero_lan_transport_supported_sha256[];
 /* Requires an empty receipt (valid==0). Rejects without changing it. Validates
  * title identity, original channel vtable/all12slots and native idle state,
  * preserves normalized mode2, then changes only context+661 from1 to0.

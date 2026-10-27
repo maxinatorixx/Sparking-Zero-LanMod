@@ -77,14 +77,14 @@ static int userinfo_copy_id(void *context,SzeroNativeString *out,const SzeroNati
  unsigned char *copy=calloc((size_t)size+1,1);if(!copy) return 0;
  if(size && !read_mem((uintptr_t)in->words[1],copy,(size_t)size)) {free(copy);return 0;}
  typedef void *(SZERO_NATIVE_CALL *Fn)(void *,const void *,size_t,size_t);
- ((Fn)(base+0x1dcc4a0))(out,copy,(size_t)size,(size_t)size);
+ ((Fn)(base+szero_bind_rva(0x1dcc4a0)))(out,copy,(size_t)size,(size_t)size);
  free(copy);return 1;
 }
 static void userinfo_destroy_id(void *context,SzeroNativeString *owned) {
  (void)context;
  if(owned->words[0]&1) {
   uintptr_t allocator=(uintptr_t)(owned->words[0]&~UINT64_C(3));
-  if(!allocator) allocator=*(uintptr_t *)(base+0x8cf7900);
+  if(!allocator) allocator=*(uintptr_t *)(base+szero_bind_rva(0x8cf7900));
   typedef void (SZERO_NATIVE_CALL *Fn)(uintptr_t,uintptr_t);
   uintptr_t vt=*(uintptr_t *)allocator;
   ((Fn)(*(uintptr_t *)(vt+0x28)))(allocator,(uintptr_t)owned->words[1]);
@@ -95,7 +95,7 @@ static void *userinfo_original(void *context,void *self,void *out,const void *id
  UserInfoReplacement *r=context;
  typedef void (SZERO_NATIVE_CALL *Fn)(void *,void *,const void *,void *);
  /* Immutable exact-slot validation at publication, no caller-supplied code. */
- ((Fn)(base+userinfo_steam_slots[19]))(self,out,ids,records);
+ ((Fn)(base+szero_bind_rva(userinfo_steam_slots[19])))(self,out,ids,records);
  (void)r;return out;
 }
 static void *userinfo_hook(void *self,void *out,const void *ids,void *records) {
@@ -116,9 +116,9 @@ static UserInfoReplacement *userinfo_publish(uintptr_t service) {
  /* Never recycle a published table, including a destroyed/reused object. */
  for(LONG i=0;i<InterlockedCompareExchange(&userinfo_replacement_count,0,0);i++) if(userinfo_replacements[i].user==user) return NULL;
  if(userinfo_replacement_count==4 || !writable_pointer(user) ||
-    !read_mem(user,&vt,8) || vt!=base+0x7b94d68 ||
+    !read_mem(user,&vt,8) || vt!=base+szero_bind_rva(0x7b94d68) ||
     !read_mem(vt,original,sizeof(original))) return NULL;
- for(unsigned i=0;i<20;i++) if(original[i]!=base+userinfo_steam_slots[i]) return NULL;
+ for(unsigned i=0;i<20;i++) if(original[i]!=base+szero_bind_rva(userinfo_steam_slots[i])) return NULL;
  UserInfoReplacement *r=userinfo_replacements+userinfo_replacement_count;
  memset(r,0,sizeof(*r));r->user=user;r->original=vt;memcpy(r->table,original,sizeof(original));
  r->table[19]=(uintptr_t)userinfo_hook;

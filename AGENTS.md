@@ -1,6 +1,127 @@
 # Sparking ZERO Arena — maintainer handoff
 
+## Publication authorization — v0.1.2 (2026-10-27)
+
+User explicitly authorized GitHub push AND release, superseding all older
+LOCAL-ONLY/no-publication restrictions below. Preserve upstream README commit
+13901b8: user removed the fixed-EXE SHA block and game-ownership Requirements
+bullet. Both edits are retained; Legal disclaimer remains. User explicitly
+confirmed testing on game v3020 and v3022; document those versions as tested.
+Mixed-version multiplayer remains unverified. Publish full ZIP assets only via
+the existing scoped GitHub Actions release workflow; no loose dist launchers.
+Temporary stash kept safely while resolving upstream README overlap; all
+compatibility code/resources restored on top of13901b8 without history rewrite.
+
+## Adaptive native bindings — local update (2026-10-27)
+
+User supplied a newer installation under ignored `/Update/` and requested both
+versions plus similar future relocations. All work remains LOCAL ONLY: no
+commit/push/tag/release, no installed-game/PAK/save/prefix/live-container writes.
+Original and Update Shipping executables were inspected READ ONLY; data-only PE
+fixtures never execute their code. `/Update/` is now ignored in its entirety.
+
+Shared `native_bindings.c/.h` resolves147real image bindings (148inventory
+operands included one obsolete image-minimum extent). Catalog165unique recipes,
+22body reference constraints and95prefix reference/section constraints. No EXE
+hash, timestamp or global relocation delta selects a layout. Two independently
+decoded data references/class-name constraint used where needed; field offsets,
+local branch distances and non-relative instruction bytes remain constrained.
+All original thread/ABI/pointer/native-owned memory/restoration guards remain.
+Known reference addresses are developer metadata, not runtime allowlists.
+
+All6helpers and shared session/stream/transport/provider code use canonical-RVA
+resolution. Initialization/scanning occurs on worker threads before callbacks;
+all game-thread lookups are cached binary searches. Small hook targets also use
+interior anchors: an initial fault-injection run caught83byte58f19f0 anchored at
+its prologue; corrected and rerun successfully. Do not reintroduce this race.
+Owning-helper prefix checks additionally validate masked reference targets.
+Backend revision ranked-bindings1; optional tracer schema6/bindings1. Diagnostics
+include `binding_error` for missing/ambiguous/conflicting addresses.
+
+Generator `lan/generate_native_bindings.py` uses tracked
+`native/native_bindings_recipes.json` plus explicitly supplied original/new PE
+paths; requires pefile+GNUobjdump only for regeneration. Ordinary builds use
+checked-in catalog and need no game files. `lan/build_native.py` stages all six
+DLLs with shared resolver. Fixtures use explicit identity mode only where they
+supply synthetic callback addresses; production never falls back to identity.
+
+Read-only comparison mapped all operands;122/124 bounded code comparisons
+normalize identically; remaining two contain embedded switch-table RVAs/data.
+Verified84session-provider,12transport,20userinfo and2pair vtable slots in order.
+All124normalized16byte prefixes pass against BOTH supplied PE artifacts.
+Data-only matrix passed original/new, each with simulated+0x2000section relocation,
+19damaged hooked prologues, combined shift/hooks and corrupted-anchor refusal.
+Separate9synthetic cases cover ambiguity, altered field/branch, wrong referenced
+callee/data section and invalidPE/bounds. Resolver scan measured~3.85sperimage
+once off-thread; no game-thread scans. FINAL381Python tests PASS/no skips394.516s, including both data-only artifacts
+and all shift/hook/corruption cases with all124prefixguards; sixLua mocks PASS
+and four manual legacy/session-host Win64 fixtures PASS. Full clean log:
+/tmp/szero-multiversion-build/full-tests-final.log. Focused6native checks
+also PASS66.900s. First full attempt was interrupted after a mistyped disposable
+Docker image tag caused2test errors; final uses imageIDff7e388f5a9e. Legacy menu
+fixture initially used a wrapping canonical base from Wine low stack: its
+TEST-ONLY code buffer is now static; identity-prefix fixtures use bounded RPM
+while production retains actual resolved PE/prefix guards. No production failure
+was suppressed. The initial hook-coexistence failure was a realresolverissue,
+fixed in the interior-anchor policy and covered by final regression.
+
+All6DLLs rebuilt strictly, then reproduced byte-for-byte in a separate staging
+directory. `build_native.py` pins preferred image bases because MinGW otherwise
+hashes output paths into base addresses; ASLR/relocations remain enabled.
+Both onefiles rebuilt from full source into .build/desktop only; each14embedded
+DLL/Lua/loader/license resources verified exact.
+Linux:f383dc481ccff65940ac5f66b46918a81ccf0aa3a930033d4ac82dc5f3734881
+Windows:19ad6594212821c21588e94e42f63aebe13fc47616442fff73fba62a0e2de7bd
+Final39entryArenaZIP:c2109f8fdea2491e33918341a9975438faab346004feeec2902200c61a092cf8
+Final218entrysourceZIP:3c15a115058ad9295ba57bb2d1474cf21d9d34dc182a64542df3943e448c3fe3
+All4diststandalones remain unchanged against
+/tmp/szero-multiversion-dist-before.sha256. GitHEAD remains6d925a3; no
+commits/push/tags/releases, installed-game/userprefix/liveDB mutations.
+
+This is static compatibility evidence, not actual updated-game acceptance.
+Future relocations work only while required patterns/references/layout agree;
+changes fail closed. Mixed original/updated multiplayer protocol compatibility
+is UNVERIFIED. Result-menu exit bug remains UNFIXED and unrelated.
+
 ## Objective and current status
+
+LOCAL-ONLY UPDATE (2026-10-26): user explicitly requested removing ALL game-EXE
+SHA gates and creating a local fullZIP before any publication. Do NOT commit,
+push, tag or publish these changes. This overrides prior publication permission.
+Selection/install/launch now require file presence, not EXE digest. Installer
+API is install(game_root); old receipts work and drop game_exe_sha256 on update.
+All6 native helpers use shared native_image.h for loaded PE64/AMD64/bounds,
+retaining original prefix/pointer/ABI/ownership/thread checks. Backend hashes
+only its OWN DLL for optional diagnostic identity; loader/mod/save/ZIP integrity
+checks remain. Static native session partition is unchanged as historical
+layout/protocol ID, not an observed EXE SHA. No server migration needed fromv0.1.1.
+Backend revision ranked-layout1; tracer schema6/layout1 removes EXE digest field;
+console/session metadata uses validation:native_layout, audit.lua no hash gate.
+All6 helperDLLs+audit.lua installed delta; no original EXE/PAK/save/other-mod edits.
+Reinstall OUR mod with new LOCAL launchers on both closed games. Native layout
+compatibility remains required; removing SHA does not support every game patch.
+Builds staged ONLY.build/desktop; preserve all dist root/desktop standalones.
+Exact frozen payload verifier now checks14resources (all6DLLs,6Lua,loader/license).
+Focused39 UI/installer/account checks PASS1.321s; native4checks PASS76.468s;
+3legacy probe fixtures PASS;6Lua mocks PASS. Includes different-digest EXE
+selection/install/launch, missing file refusal, legacy receipt update/uninstall,
+corrupt loader refusal, PE64/bounds and changed-prefix refusal. FINAL379Python tests PASS/no skips333.248s plus6Lua mocks and3legacy native
+probe fixtures. Initial full run had7errors solely from one old test fixture
+passing the deleted install argument; fixed test_install_controls helper,8focused
+ownership checks passed, final clean379 passed. No production failure hidden.
+Fresh compiled IPC fixtures:/tmp/szero-noexesha-native; full log:/tmp/szero-noexesha-full-clean.log.
+Bothonefiles rebuilt FULLSOURCE and
+14embeddedresources verified exact, including all6DLLs and6Lua+loader/license.
+Linux:db59ac58c279ef1adcc85035260ef86f4431a2544f3d3f7ca9065be0a7a5602c
+Windows:fe40a842053c377956925eee4292d2e587841abe6954b122a995ce233a87612d
+Isolatedtestserver:ff7e388f5a9e0ece7a2ae1b7d6215fe1d1ea1f331b15c0a9d71847a44e850f09.
+No actual game execution or claims of arbitrary-version native compatibility.
+Final39entryArenaZIP:6c54d2b168e6258b61d1866ef3a2398ead2ed5fd341b850a10e9b01d54fd0607
+Final207entrysourceZIP:af229427959c26857871b9e20476abe6330a7a9e62cbfd95268c323fe9cb649e
+All manifest entries/exact staged onefiles and local-only docs verified.
+GitHEAD remains6d925a3; no commits/
+pushes/tags/releases performed. All4diststandalones unchanged against
+/tmp/szero-noexesha-dist-before.sha256. No installed-game/userprefix/liveDB writes.
 
 Provide a configurable LAN server and standalone launcher while retaining the
 native Battle → Online menus and game battle logic. No hosts-file edits.
@@ -55,10 +176,10 @@ Do not force success codes/controller states or claim this issue is resolved.
 
 ## Hook and transport invariants
 
-Exact original Shipping SHA256:
+Analyzed reference Shipping SHA256 (NOT an executable allowlist):
 e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55
 
-Keep build/prefix/thread/argument/RAX/LastError/borrowed-memory and native-owned
+Keep layout/prefix/thread/argument/RAX/LastError/borrowed-memory and native-owned
 response/lifetime guards. Don't globally reanalyze the game or remove guards to
 support another build. Impact/clash GetWinner/IsWinner are not match winners.
 Context17fa was not proven own-win authority. No guessed result or identity writes.
@@ -73,9 +194,12 @@ Targeted kind4 UDP validates registered source/current destination membership.
 Keep compatible legacy partitions and transactional prepare/ACK/rollback intact.
 
 Current DLL SHA256:
-- backend_adapter.dll:54e3cdf1ddcda715a8585a34e5e184557ea8ddd466033dd4d8ea445f5e5c53c6
-- service_trace.dll:d9173fa5ddb621230c4d55ccf9ded671804f05856966828b93f14cf03e9689c5
-- native_search.dll:6f716041541e004b2b48a224e961f75c48d4c47660de82ad9efae54b17ba4ef3
+- backend_adapter.dll:1ef5348df4ad88d84ed89ef086e52bd093194bc3a70ffb4e3fb538de18ff3fd1
+- service_trace.dll:58376673e2bcfa2a6872cb11fde7b930a9bc029db4ca3168a25afb79a36de40a
+- native_search.dll:6519320f25246a16178dffbb2be8e072c12d51369f79654cb010399318515b16
+- console_probe.dll:e5b2ebbd7ff30a1b7895e49054cb3e4b9beadc04997ea3dc67057df5bbc2e3c1
+- menu_bridge.dll:aa09d8938061fd842ff960c5c6bf55c2943e621172a5812755f7132233921d83
+- session_probe.dll:6697d19bdde2db3e8ca4a6b12479186775cff764a58799f0c8d54c2450c08526
 
 ## Launcher/account/installation behavior to preserve
 

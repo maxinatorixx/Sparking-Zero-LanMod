@@ -1,35 +1,42 @@
-# Arena v0.1.1 — experimental
+# Arena v0.1.2 — experimental
 
-Packaging update: Git now pins text line endings so both platform launchers
-embed byte-identical Lua resources. No game/network logic changed from v0.1.0.
+Tested with game **v3020 and v3022**. Native helpers now resolve functions,
+globals and tables from reviewed instruction/reference patterns instead of
+requiring one game executable SHA or one fixed set of addresses.
 
-Download **SzeroLAN-Arena.zip** for both standalone launchers, the Docker server,
-installation documentation and screenshots. Players need no Python installation.
-The experimental source ZIP is optional for developers. SHA-256 files accompany
-the packages. Use matching client/server versions.
+Compatible future address relocations can resolve automatically. Changed or
+ambiguous instructions/layouts still refuse safely; pointer, ABI, ownership,
+thread and restoration checks remain. Loader/mod/save/archive checksums remain.
+Mixed game-version multiplayer and arbitrary future patches are not confirmed.
 
-- Native casual quickmatch/lobbies and player cards are user-confirmed working.
-- Ranked combat has worked in actual tests. Typed round results now drive
-  persistent per-mode LAN Elo, counters and streaks after both reports agree.
-- Ranked Single/DP matchmaking starts at ±100 Elo, expands every15s to±600,
-  and allows any Elo after120s while retaining native battle/settings filters.
-- One Docker container provides the game service, account/profile/ranking
-  website and MariaDB. Launcher login uses the same game TCP port27150.
-- Windows/Linux one-file launchers include the pinned UE4SS loader and our mod.
-  Settings save on Launch; logging defaults off; ranked reporting remains active.
+Download **SzeroLAN-Arena.zip** for both standalone Windows/Linux launchers,
+the single-container Docker server, documentation and screenshots. Players
+need no Python installation. The source ZIP is optional for developers.
 
-**Known failure:** the player who remains on the Ranked result screen can get a
-black screen/network error after the room creator leaves. The correct native
-exit/rematch handshake is not fixed. Persistent results are independent of that
-later failure. Latest actual-game rating acceptance, all private-slot settings,
-complete tournament brackets and unusual finish flows still need verification.
-Official game rank titles/seasons are separate from LAN Elo.
+- Game-EXE SHA restrictions removed from selection, install, launch and all six
+  native helpers. Existing install receipts remain compatible.
+- 147 native bindings resolve through unique patterns and decoded references.
+  Worker-side initialization caches addresses; game-thread callbacks do not scan.
+- Hook-coexistence tests cover helpers loading after other owned hooks, while
+  damaged prologues still fail their installation guards.
+- No server protocol or session-partition migration from v0.1.1.
+- Preserves the README edits made on GitHub before this release.
 
-Upgrade by preserving `.env`/server configuration/volumes, rebuilding the server,
-and reinstalling our mod on BOTH clients with games closed. No game EXE/PAK
-replacement is needed. Source-only development fixtures do not prove every
-actual game flow. See README.md and the support table before hosting an event.
+Validation: **381 Python tests passed**, six Lua mocks and four synthetic Win64
+helper fixtures. Data-only tests cover both executable versions, simulated
+future relocations, hook coexistence and corrupted/ambiguous binding refusal.
+Both platform launchers verify all 14 embedded mod/loader resources exactly.
+Source-only fixtures do not prove every actual game flow.
 
-Intended for lawful LAN play with legitimately owned game copies, not piracy,
-DRM bypass or entitlement circumvention. No game files or platform emulators
-are supplied. Third-party dependencies retain their licenses.
+Close both games and reinstall **our mod on both clients** using these
+launchers. No original game EXE/PAK replacement is needed. Preserve server
+configuration, `.env` and database volumes when upgrading from older releases.
+
+**Known issue remains:** leaving the Ranked result screen can cause a black
+screen/network error for the remaining player. The native exit/rematch handshake
+is not fixed. Complete tournament brackets and all private-slot configurations
+still need broader verification. See README.md for the complete support table.
+
+Intended for lawful LAN play, not piracy, DRM bypass or entitlement
+circumvention. No original game files or platform emulators are supplied.
+Third-party dependencies retain their licenses.

@@ -74,10 +74,10 @@ static int lifecycle_remove_cache(uintptr_t service,const unsigned char id[32]) 
  return removed;
 #else
  SzeroNativeSessionHost host;SzeroNativeSessionCallbacks cb;
- if(!provider_host(service,NULL,&host,&cb) || !lifecycle_executable(base+0x58cbe10)) return 0;
+ if(!provider_host(service,NULL,&host,&cb) || !lifecycle_executable(base+szero_bind_rva(0x58cbe10))) return 0;
  uintptr_t view[2]={(uintptr_t)id,32};SzeroNativeError reason={0};reason.code=0x57c3a7bb;
  typedef void (SZERO_NATIVE_CALL *Fn)(uintptr_t,const void *,const void *,unsigned char);
- ((Fn)(base+0x58cbe10))(service,view,&reason,0);
+ ((Fn)(base+szero_bind_rva(0x58cbe10)))(service,view,&reason,0);
  provider_frame_clear(service);
  return 1;
 #endif
@@ -161,9 +161,9 @@ static int lifecycle_drain_native_queue(void *self) {
   * generic locked task-queue14582e450. It does NOT dispatch Steam sessions.
   * Preserve this common base queue for every owned provider, not the LOCAL
   * registry-specific tick14592f6f0 which cannot interpret central LAN IDs. */
- if(!lifecycle_executable(base+0x58cec20)) return 0;
+ if(!lifecycle_executable(base+szero_bind_rva(0x58cec20))) return 0;
  typedef void (SZERO_NATIVE_CALL *Tick)(void *);
- ((Tick)(base+0x58cec20))(self);
+ ((Tick)(base+szero_bind_rva(0x58cec20)))(self);
 #endif
  return 1;
 }

@@ -17,9 +17,9 @@ end
 local audit=factory("fixture/","ab12")
 assert(calls==0,"creation must not run native helper")
 assert(audit():find("pending",1,true) and calls==1)
-next_data='{"version":1,"status":"snapshot","target_sha256":"wrong","registered":{}}'
+next_data='{"version":1,"status":"snapshot","validation":"unknown_layout","registered":{}}'
 assert(audit():find("pending",1,true),"reject unrelated image report")
-next_data='{"version":1,"status":"snapshot","target_sha256":"e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55","complete_occupied_read":true,"registered":{"spn.multiplayerContext.contextMode":true,"spn.multiplayerContext.apply.exec":true}}'
+next_data='{"version":1,"status":"snapshot","validation":"native_layout","complete_occupied_read":true,"registered":{"spn.multiplayerContext.contextMode":true,"spn.multiplayerContext.apply.exec":true}}'
 assert(audit():find("1/5 base names registered",1,true))
 local previous=calls
 audit(); assert(calls==previous,"do not repeatedly audit registry")

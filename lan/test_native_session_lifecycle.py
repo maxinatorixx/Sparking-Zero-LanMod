@@ -15,6 +15,7 @@ class NativeLifecycleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="szero-lifecycle-") as temporary:
             executable = Path(temporary) / "lifecycle.exe"
             subprocess.run(["x86_64-w64-mingw32-gcc", "-std=c11", "-Wall", "-Wextra", "-Werror",
+                "-DSZERO_BINDINGS_TEST_IDENTITY",
                 *(str(native / file) for file in ["test_native_session_lifecycle.c",
                     "session_materializer.c", "native_session_wire.c",
                     "native_session_adapter.c", "native_session_codec.c"]),

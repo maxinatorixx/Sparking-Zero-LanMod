@@ -1,5 +1,33 @@
 # Arena — Docker server and standalone launcher
 
+## v0.1.2: game v3020/v3022 compatibility
+
+Selection, installation, launch and all six native helpers no longer hash or
+allowlist the game EXE. Only required executable-file presence is checked by
+the launcher/installer. Native helpers validate loaded PE64/AMD64 images and
+resolved-RVA bounds, then retain their instruction, pointer, ABI and ownership
+checks. This does not make every game version compatible; a changed native
+layout can still refuse safely. UE4SS/mod/save/release integrity checks remain.
+Old install receipts work; the obsolete game_exe_sha256 field is dropped on
+update. The static session partition stays unchanged as a protocol/layout ID,
+not an observed EXE digest. No server rebuild/migration is required fromv0.1.1.
+
+Use the new full ZIP, close the game, and reinstall our mod with its
+launcher on both PCs. All six bundled native helper DLLs and audit.lua change;
+original game EXE/PAKs, other mods and saves are not edited. This package has
+been tested with game v3020 and v3022. Earlier sections describe historical
+revisions; their game-EXE SHA gating statements are superseded by this section.
+
+The new native resolver supports the original and supplied updated executable
+through reviewed instruction patterns and decoded relative references. It does
+not select a version by hash or add one global address delta. Similar future
+relocations can work if the required code shapes and object layouts remain
+compatible. Missing/ambiguous patterns, wrong reference targets and changed
+instructions refuse safely and are identified by `binding_error` when mod
+logging is enabled. Both clients must use the freshly bundled helpers.
+Game v3020 and v3022 are tested; mixed-version multiplayer is still unverified.
+
+
 ## Latest: persistent Ranked results and expanding Elo matchmaking
 
 New matched clients capture the game's typed own result operationally, even
@@ -605,7 +633,7 @@ prints its exact path; send that too if the trace is absent or lacks `ready`.
 The existing server log cannot expose these unrecorded native client returns.
 Uncheck the option on the next normal launch.
 
-The probe verifies the exact original executable SHA and ten16-byte in-memory
+The probe validates the loaded native image and checks its16-byte in-memory
 entry prefixes before applying temporary **in-memory** function detours. It
 does not patch the EXE on disk. It records actual input masks/category and
 plain40/tagged48 result codes without changing arguments, results, identity,

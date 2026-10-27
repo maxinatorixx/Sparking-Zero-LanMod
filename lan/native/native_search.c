@@ -8,7 +8,8 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
-#include <bcrypt.h>
+#include "native_image.h"
+#include "native_bindings.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -115,7 +116,6 @@ static void ipc_fail(LONG error,LONG code) {
 }
 static wchar_t endpoint[32768], report_path[32768];
 static char instance[33];
-static const char expected_hash[]="e54e79e756f79719f09915078a37b6e87c23d32ecaaaa2f485d1a048ba198e55";
 static const uintptr_t tables[3]={0x7b95320,0x7b95400,0x7b954e0};
 static const uintptr_t slots[3][28]={
  {0x58af630,0x20f8b70,0x58af360,0x58ae590,0x11072d0,0x59268f0,0x58ce9b0,0x58cec20,0x11072d0,0x58aeff0,0x5926200,0x58c8710,0x5925170,0x58c91a0,0x11072d0,0x58cdc30,0x58c8b70,0x5924640,0x59277a0,0x59269b0,0x58cac60,0x58c7e50,0x5928110,0x5929340,0x5926b10,0x5927dc0,0x5928330,0x5842490},
@@ -256,7 +256,7 @@ static int writable_pointer(uintptr_t p) {
 }
 static int selected(uintptr_t *ctx,uintptr_t *service) {
  uintptr_t vt,bundle;unsigned char selector;
- return read_mem(base+0x8cf84f8,ctx,8) && read_mem(*ctx,&vt,8) && vt==base+0x7ba1bf8 &&
+ return read_mem(base+szero_bind_rva(0x8cf84f8),ctx,8) && read_mem(*ctx,&vt,8) && vt==base+szero_bind_rva(0x7ba1bf8) &&
   read_mem(*ctx+8,&bundle,8) && read_mem(*ctx+0x667,&selector,1) &&
   read_mem(bundle+(selector?0x50:0x48),service,8) && *service;
 }
@@ -288,11 +288,11 @@ static const char *install(void) {
  }
 #endif
  if(replacement_count==4 || !writable_pointer(service) || !read_mem(service,&vt,8)) return "service_guard_failed";
- unsigned kind;for(kind=0;kind<3;kind++) if(vt==base+tables[kind]) break;
+ unsigned kind;for(kind=0;kind<3;kind++) if(vt==base+szero_bind_rva(tables[kind])) break;
  if(kind==3) return "unknown_service_vtable";
  uintptr_t original[28];
  if(!read_mem(vt,original,sizeof(original))) return "unreadable_vtable";
- for(unsigned n=0;n<28;n++) if(original[n]!=base+slots[kind][n]) return "vtable_slot_mismatch";
+ for(unsigned n=0;n<28;n++) if(original[n]!=base+szero_bind_rva(slots[kind][n])) return "vtable_slot_mismatch";
  Replacement *r=&replacements[replacement_count];
  r->object=service;r->original=vt;memcpy(r->table,original,sizeof(original));
  r->table[17]=(uintptr_t)block_create;r->table[18]=(uintptr_t)search;r->table[19]=(uintptr_t)block_join;
@@ -360,7 +360,7 @@ static void report(const char *reason) {
      provider_owns(NULL,service,vptr)) {
    if(read_mem(ctx+0x3b8,&count,8) && count<=64) context_count=(LONG)count;
    for(unsigned n=0;n<replacement_count;n++) if(replacements[n].object==service)
-    for(unsigned k=0;k<3;k++) if(replacements[n].original==base+tables[k]) service_kind=(LONG)k+1;
+    for(unsigned k=0;k<3;k++) if(replacements[n].original==base+szero_bind_rva(tables[k])) service_kind=(LONG)k+1;
   }
   size_t used=strlen(thread_fields);
   field_written=snprintf(thread_fields+used,sizeof(thread_fields)-used,
@@ -386,8 +386,8 @@ static void report(const char *reason) {
   if(field_written<0 || (size_t)field_written>=sizeof(thread_fields)-used) return;
  }
 #endif
- int written=snprintf(line,sizeof(line),"{\"version\":1,\"revision\":\"%s\",\"status\":\"%s\",\"reason\":\"%s\",\"searches\":%ld,\"cancels\":%ld,\"%s\":%ld,\"%s\":%ld,\"ipc_phase\":\"%s\",\"ipc_error\":\"%s\",\"ipc_error_code\":%ld,\"last_request\":%ld%s}\n",
-  revision,!strcmp(reason,installed_reason())?"installed":"waiting",reason,
+ int written=snprintf(line,sizeof(line),"{\"version\":1,\"revision\":\"%s\",\"status\":\"%s\",\"reason\":\"%s\",\"binding_error\":\"%s\",\"searches\":%ld,\"cancels\":%ld,\"%s\":%ld,\"%s\":%ld,\"ipc_phase\":\"%s\",\"ipc_error\":\"%s\",\"ipc_error_code\":%ld,\"last_request\":%ld%s}\n",
+  revision,!strcmp(reason,installed_reason())?"installed":"waiting",reason,szero_bindings_error(),
   InterlockedCompareExchange(&searches,0,0),InterlockedCompareExchange(&cancels,0,0),
   create_label,InterlockedCompareExchange(&creates,0,0),join_label,InterlockedCompareExchange(&joins,0,0),
   phase_names[phase],error_label,InterlockedCompareExchange(&ipc_error_code,0,0),
@@ -398,23 +398,12 @@ static void report(const char *reason) {
  if(fputs(line,f)>=0 && !ferror(f)) strcpy(previous,line);
  fclose(f);
 }
-static int verify_hash(void) {
- wchar_t exe[32768];BCRYPT_ALG_HANDLE alg=NULL;BCRYPT_HASH_HANDLE hash=NULL;
- HANDLE file=INVALID_HANDLE_VALUE;unsigned char buf[65536],digest[32];DWORD count;char hex[65];int valid=0;
- if(!GetModuleFileNameW(NULL,exe,32768)) goto done;
- file=CreateFileW(exe,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_FLAG_SEQUENTIAL_SCAN,NULL);
- if(file==INVALID_HANDLE_VALUE || BCryptOpenAlgorithmProvider(&alg,BCRYPT_SHA256_ALGORITHM,NULL,0)<0 ||
-  BCryptCreateHash(alg,&hash,NULL,0,NULL,0,0)<0) goto done;
- for(;;) {if(!ReadFile(file,buf,sizeof(buf),&count,NULL)) goto done;if(!count) break;
-  if(BCryptHashData(hash,buf,count,0)<0) goto done;}
- if(BCryptFinishHash(hash,digest,32,0)<0) goto done;
- for(unsigned n=0;n<32;n++) sprintf(hex+2*n,"%02x",digest[n]);
- valid=!strcmp(hex,expected_hash);
-done:
- if(hash) BCryptDestroyHash(hash);
- if(alg) BCryptCloseAlgorithmProvider(alg,0);
- if(file!=INVALID_HANDLE_VALUE) CloseHandle(file);
- return valid;
+static int verify_image(void) {
+#if defined(SZERO_NATIVE_SEARCH_TEST) || defined(SZERO_NATIVE_SESSION_IPC_TEST)
+ return szero_native_image(base,0);
+#else
+ return szero_native_image(base,0) && szero_bindings_init(base);
+#endif
 }
 static int wait_socket(SOCKET s,int writing,ULONGLONG deadline) {
  while(GetTickCount64()<deadline) {
@@ -569,7 +558,10 @@ static void process_job(void) {
 }
 static DWORD WINAPI worker(void *unused) {
  (void)unused;
- if(!verify_hash()) {InterlockedExchange(&verification,3);return 0;}
+ if(!verify_image()) {InterlockedExchange(&verification,3);return 0;}
+ current_task=(void *(*)(void))(base+szero_bind_rva(0x5817fe0));
+ yield_cancel=(unsigned char (*)(void *))(base+szero_bind_rva(0x5818a50));
+ copy_error=(void *(*)(void *,const void *))(base+szero_bind_rva(0x2804ac0));
  WSADATA w;if(WSAStartup(MAKEWORD(2,2),&w)) {InterlockedExchange(&verification,3);return 0;}
 #ifdef SZERO_SESSION_V3
  if(session_v3) {
@@ -613,15 +605,12 @@ __declspec(dllexport) int szero_native_search(void *lua) {
   wchar_t experimental[4];
   session_v3=GetEnvironmentVariableW(L"SZERO_LAN_NATIVE_SESSION3",experimental,4)==1 && experimental[0]==L'1';
 #endif
-  current_task=(void *(*)(void))(base+0x5817fe0);
-  yield_cancel=(unsigned char (*)(void *))(base+0x5818a50);
-  copy_error=(void *(*)(void *,const void *))(base+0x2804ac0);
   InterlockedExchange(&verification,1);HANDLE h=CreateThread(NULL,0,worker,NULL,0,NULL);
   if(h) CloseHandle(h);else InterlockedExchange(&verification,3);
  }
  if(GetCurrentThreadId()!=game_thread) return 0;
  LONG v=InterlockedCompareExchange(&verification,0,0);
- report(v==2?install():v==3?"verification_or_network_initialization_failed":"hashing");return 0;
+ report(v==2?install():v==3?"verification_or_network_initialization_failed":"validating_image");return 0;
 }
 
 #ifdef SZERO_NATIVE_SEARCH_TEST
@@ -662,12 +651,12 @@ static void fixture_reset(void) {
 }
 static void fixture_install_setup(unsigned kind) {
  uintptr_t ctx=base+0x1000,bundle=base+0x4000,service=base+0x5000;
- fixture_put64((void *)(base+0x8cf84f8),ctx);
+ fixture_put64((void *)(base+szero_bind_rva(0x8cf84f8)),ctx);
  memset((void *)ctx,0,0x2000);memset((void *)bundle,0,0x100);memset((void *)service,0,0x300);
- fixture_put64((void *)ctx,base+0x7ba1bf8);fixture_put64((void *)(ctx+8),bundle);
+ fixture_put64((void *)ctx,base+szero_bind_rva(0x7ba1bf8));fixture_put64((void *)(ctx+8),bundle);
  fixture_put64((void *)(bundle+0x48),service);fixture_put64((void *)(bundle+0x50),service);
- fixture_put64((void *)service,base+tables[kind]);
- for(unsigned n=0;n<28;n++) fixture_put64((void *)(base+tables[kind]+8*n),base+slots[kind][n]);
+ fixture_put64((void *)service,base+szero_bind_rva(tables[kind]));
+ for(unsigned n=0;n<28;n++) fixture_put64((void *)(base+szero_bind_rva(tables[kind])+8*n),base+szero_bind_rva(slots[kind][n]));
 }
 static void fixture_canary(const unsigned char *p,size_t begin,size_t end) {
  for(size_t n=begin;n<end;n++) assert(p[n]==0xa5);
@@ -728,7 +717,7 @@ static void fixture_install_guards(void) {
   assert(!strcmp(install(),"installed_search_cancel_only") && replacement_count==1);
   assert(qword((void *)service)==(uintptr_t)replacements[0].table);
   for(unsigned n=0;n<28;n++) {
-   uintptr_t expected=n==17?(uintptr_t)block_create:n==18?(uintptr_t)search:n==19?(uintptr_t)block_join:base+slots[kind][n];
+   uintptr_t expected=n==17?(uintptr_t)block_create:n==18?(uintptr_t)search:n==19?(uintptr_t)block_join:base+szero_bind_rva(slots[kind][n]);
    assert(replacements[0].table[n]==expected);
   }
   assert(!strcmp(install(),"installed_search_cancel_only") && replacement_count==1);
@@ -736,7 +725,7 @@ static void fixture_install_guards(void) {
  fixture_reset();fixture_install_setup(0);fixture_put64((void *)(ctx+0x40),1);
  assert(!strcmp(install(),"active_context_refused"));fixture_put64((void *)(ctx+0x40),0);
  *(unsigned char *)(ctx+0x19d6)=1;assert(!strcmp(install(),"active_context_refused"));*(unsigned char *)(ctx+0x19d6)=0;
- fixture_put64((void *)(base+tables[0]+8*27),1);assert(!strcmp(install(),"vtable_slot_mismatch"));
+ fixture_put64((void *)(base+szero_bind_rva(tables[0])+8*27),1);assert(!strcmp(install(),"vtable_slot_mismatch"));
  fixture_install_setup(0);fixture_put64((void *)service,base+0x1110);assert(!strcmp(install(),"unknown_service_vtable"));
  fixture_install_setup(0);replacement_count=4;assert(!strcmp(install(),"service_guard_failed"));replacement_count=0;
  fixture_put64((void *)ctx,0);assert(!strcmp(install(),"context_not_ready"));
@@ -800,8 +789,8 @@ static void fixture_session_install_setup(unsigned kind) {
  session_job.game_port=32111;session_job.proxy_port=32112;
  uintptr_t ctx=base+0x1000;
  fixture_put32((void *)(ctx+0x65c),2);*(unsigned char *)(ctx+0x661)=1;
- fixture_put64((void *)(ctx+0x108),base+0x7b8d640);
- for(unsigned i=0;i<12;i++) fixture_put64((void *)(base+0x7b8d640+8*i),base+channel[i]);
+ fixture_put64((void *)(ctx+0x108),base+szero_bind_rva(0x7b8d640));
+ for(unsigned i=0;i<12;i++) fixture_put64((void *)(base+szero_bind_rva(0x7b8d640)+8*i),base+channel[i]);
 }
 static void fixture_session_install(void) {
  uintptr_t ctx=base+0x1000,service=base+0x5000;
@@ -834,7 +823,7 @@ static void fixture_session_install(void) {
   assert(!*(unsigned char *)(ctx+0x661));
   Replacement *r=&replacements[0];
   for(unsigned i=0;i<28;i++) {
-   uintptr_t expected=base+slots[kind][i];
+   uintptr_t expected=base+szero_bind_rva(slots[kind][i]);
    switch(i) {
     case 7:expected=(uintptr_t)lifecycle_tick;break;
     case 12:expected=(uintptr_t)lifecycle_teardown;break;
@@ -856,7 +845,7 @@ static void fixture_session_install(void) {
   assert(strncmp(job.begin,kind==2?"SEARCH3 71 1 ":"SEARCH3 71 0 ",13)==0);
   fixture_put64((void *)(r->original+0x40),base+1);
   assert(!provider_default_normalize(service,&normalize));
-  fixture_put64((void *)(r->original+0x40),base+slots[kind][8]);
+  fixture_put64((void *)(r->original+0x40),base+szero_bind_rva(slots[kind][8]));
   assert(qword((void *)service)==(uintptr_t)r->table);
   assert(!strcmp(install(),"installed_session_v3_development") && session_transport_count==1);
  }
@@ -864,23 +853,23 @@ static void fixture_session_install(void) {
   * immutable published table remains retained rather than reused/freed. */
  fixture_session_install_setup(0);*(unsigned char *)(ctx+0x2c0)=1;
  assert(!strcmp(install(),"session_transport_busy") && replacement_count==1);
- assert(qword((void *)service)==base+tables[0] && *(unsigned char *)(ctx+0x661)==1);
+ assert(qword((void *)service)==base+szero_bind_rva(tables[0]) && *(unsigned char *)(ctx+0x661)==1);
  assert(!session_transport_count);
- fixture_session_install_setup(0);fixture_put64((void *)(base+0x7b8d640+8*11),base+1);
+ fixture_session_install_setup(0);fixture_put64((void *)(base+szero_bind_rva(0x7b8d640)+8*11),base+1);
  assert(!strcmp(install(),"session_transport_identity"));
- assert(qword((void *)service)==base+tables[0] && *(unsigned char *)(ctx+0x661)==1);
+ assert(qword((void *)service)==base+szero_bind_rva(tables[0]) && *(unsigned char *)(ctx+0x661)==1);
  fixture_session_install_setup(0);fixture_put32((void *)(ctx+0x65c),1);
  assert(!strcmp(install(),"session_transport_mode"));
- assert(qword((void *)service)==base+tables[0] && *(unsigned char *)(ctx+0x661)==1);
+ assert(qword((void *)service)==base+szero_bind_rva(tables[0]) && *(unsigned char *)(ctx+0x661)==1);
  fixture_session_install_setup(0);verification=1;
  assert(!strcmp(install(),"session_transport_host_gate"));
- assert(qword((void *)service)==base+tables[0] && *(unsigned char *)(ctx+0x661)==1);
+ assert(qword((void *)service)==base+szero_bind_rva(tables[0]) && *(unsigned char *)(ctx+0x661)==1);
  fixture_session_install_setup(0);provider_stopped=1;
  assert(!strcmp(install(),"session_provider_quarantined") && !replacement_count);
- assert(qword((void *)service)==base+tables[0] && *(unsigned char *)(ctx+0x661)==1);
+ assert(qword((void *)service)==base+szero_bind_rva(tables[0]) && *(unsigned char *)(ctx+0x661)==1);
  fixture_session_install_setup(0);fixture_put64((void *)(service+0x200),1);
  assert(!strcmp(install(),"existing_native_cache_refused") && !replacement_count);
- assert(qword((void *)service)==base+tables[0] && *(unsigned char *)(ctx+0x661)==1);
+ assert(qword((void *)service)==base+szero_bind_rva(tables[0]) && *(unsigned char *)(ctx+0x661)==1);
  fixture_reset();
 }
 static void fixture_userinfo_publication(void) {
@@ -891,11 +880,11 @@ static void fixture_userinfo_publication(void) {
  uintptr_t service=base+0x5000,user=base+0x8000,bundle=base+0x4000;
  fixture_put64((void *)(service+8),bundle);
  memset((void *)user,0x67,0x378);fixture_put64((void *)(bundle+0x18),user);
- fixture_put64((void *)user,base+0x7b94d68);
- for(unsigned i=0;i<20;i++) fixture_put64((void *)(base+0x7b94d68+8*i),base+userinfo_steam_slots[i]);
- fixture_put64((void *)(base+0x7b94d68+8*19),base+1);
+ fixture_put64((void *)user,base+szero_bind_rva(0x7b94d68));
+ for(unsigned i=0;i<20;i++) fixture_put64((void *)(base+szero_bind_rva(0x7b94d68)+8*i),base+szero_bind_rva(userinfo_steam_slots[i]));
+ fixture_put64((void *)(base+szero_bind_rva(0x7b94d68)+8*19),base+1);
  assert(!userinfo_publish(service) && !userinfo_replacement_count);
- fixture_put64((void *)(base+0x7b94d68+8*19),base+userinfo_steam_slots[19]);
+ fixture_put64((void *)(base+szero_bind_rva(0x7b94d68)+8*19),base+szero_bind_rva(userinfo_steam_slots[19]));
  unsigned char identity_before[64];memcpy(identity_before,(void *)(user+0x200),64);
  SzeroSessionCodec codec={0};codec.data.member_count=1;
  const unsigned char remote[]="szlan:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
@@ -906,7 +895,7 @@ static void fixture_userinfo_publication(void) {
  assert(join_flags_supported(service,0) && join_flags_supported(service,0x28));
  assert(!join_flags_supported(service,0x228) && !join_flags_supported(service,0x280));
  UserInfoReplacement *r=userinfo_binding(user);assert(r);
- for(unsigned i=0;i<20;i++) assert(r->table[i]==(i==19?(uintptr_t)userinfo_hook:base+userinfo_steam_slots[i]));
+ for(unsigned i=0;i<20;i++) assert(r->table[i]==(i==19?(uintptr_t)userinfo_hook:base+szero_bind_rva(userinfo_steam_slots[i])));
  assert(!memcmp(identity_before,(void *)(user+0x200),64));
  assert(userinfo_publish(service)==r && userinfo_replacement_count==1);
  SzeroNativeString id={0};id.words[0]=1;id.words[1]=(uintptr_t)remote;id.words[2]=id.words[3]=38;

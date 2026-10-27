@@ -1,0 +1,1292 @@
+{
+  "schema": 1,
+  "description": "Reviewed canonical bindings and decoded-instruction recipes; no executable digest allowlist. Reference executables are supplied separately and never distributed.",
+  "inventory": {
+    "bindings": [
+      {
+        "rva": "0x10fd050"
+      },
+      {
+        "rva": "0x10fdcc0"
+      },
+      {
+        "rva": "0x10fddc0"
+      },
+      {
+        "rva": "0x11072d0"
+      },
+      {
+        "rva": "0x1dcc4a0"
+      },
+      {
+        "rva": "0x20f8b70"
+      },
+      {
+        "rva": "0x228bab0"
+      },
+      {
+        "rva": "0x23d76a0"
+      },
+      {
+        "rva": "0x2804ac0"
+      },
+      {
+        "rva": "0x2b380c0"
+      },
+      {
+        "rva": "0x56b4290"
+      },
+      {
+        "rva": "0x5811d40"
+      },
+      {
+        "rva": "0x5817fe0"
+      },
+      {
+        "rva": "0x5818a50"
+      },
+      {
+        "rva": "0x5842490"
+      },
+      {
+        "rva": "0x5851440"
+      },
+      {
+        "rva": "0x58522f0"
+      },
+      {
+        "rva": "0x5852940"
+      },
+      {
+        "rva": "0x5852a00"
+      },
+      {
+        "rva": "0x5875820"
+      },
+      {
+        "rva": "0x58760c0"
+      },
+      {
+        "rva": "0x5877e30"
+      },
+      {
+        "rva": "0x5877fb0"
+      },
+      {
+        "rva": "0x587b220"
+      },
+      {
+        "rva": "0x587db90"
+      },
+      {
+        "rva": "0x587e630"
+      },
+      {
+        "rva": "0x58ac920"
+      },
+      {
+        "rva": "0x58ae180"
+      },
+      {
+        "rva": "0x58ae590"
+      },
+      {
+        "rva": "0x58ae870"
+      },
+      {
+        "rva": "0x58aeff0"
+      },
+      {
+        "rva": "0x58af000"
+      },
+      {
+        "rva": "0x58af080"
+      },
+      {
+        "rva": "0x58af150"
+      },
+      {
+        "rva": "0x58af360"
+      },
+      {
+        "rva": "0x58af4b0"
+      },
+      {
+        "rva": "0x58af540"
+      },
+      {
+        "rva": "0x58af580"
+      },
+      {
+        "rva": "0x58af630"
+      },
+      {
+        "rva": "0x58af690"
+      },
+      {
+        "rva": "0x58b1e90"
+      },
+      {
+        "rva": "0x58c7e50"
+      },
+      {
+        "rva": "0x58c8710"
+      },
+      {
+        "rva": "0x58c8b70"
+      },
+      {
+        "rva": "0x58c91a0"
+      },
+      {
+        "rva": "0x58c94d0"
+      },
+      {
+        "rva": "0x58cac60"
+      },
+      {
+        "rva": "0x58caf50"
+      },
+      {
+        "rva": "0x58cbbf0"
+      },
+      {
+        "rva": "0x58cbe10"
+      },
+      {
+        "rva": "0x58cdc30"
+      },
+      {
+        "rva": "0x58ce9b0"
+      },
+      {
+        "rva": "0x58cec20"
+      },
+      {
+        "rva": "0x58de740"
+      },
+      {
+        "rva": "0x58dfeb0"
+      },
+      {
+        "rva": "0x58e0f90"
+      },
+      {
+        "rva": "0x58f19f0"
+      },
+      {
+        "rva": "0x58fa230"
+      },
+      {
+        "rva": "0x58fa280"
+      },
+      {
+        "rva": "0x58fa310"
+      },
+      {
+        "rva": "0x58fa630"
+      },
+      {
+        "rva": "0x58fab50"
+      },
+      {
+        "rva": "0x58faba0"
+      },
+      {
+        "rva": "0x58fabf0"
+      },
+      {
+        "rva": "0x591c800"
+      },
+      {
+        "rva": "0x591cb70"
+      },
+      {
+        "rva": "0x591ccde"
+      },
+      {
+        "rva": "0x591d089"
+      },
+      {
+        "rva": "0x591d25e"
+      },
+      {
+        "rva": "0x591d4d5"
+      },
+      {
+        "rva": "0x591d677"
+      },
+      {
+        "rva": "0x591d83c"
+      },
+      {
+        "rva": "0x591d989"
+      },
+      {
+        "rva": "0x591dba4"
+      },
+      {
+        "rva": "0x591de47"
+      },
+      {
+        "rva": "0x591dfa4"
+      },
+      {
+        "rva": "0x591e0be"
+      },
+      {
+        "rva": "0x5924640"
+      },
+      {
+        "rva": "0x5925170"
+      },
+      {
+        "rva": "0x5926200"
+      },
+      {
+        "rva": "0x59263a0"
+      },
+      {
+        "rva": "0x59263b0"
+      },
+      {
+        "rva": "0x59268f0"
+      },
+      {
+        "rva": "0x59269b0"
+      },
+      {
+        "rva": "0x5926b10"
+      },
+      {
+        "rva": "0x59277a0"
+      },
+      {
+        "rva": "0x5927dc0"
+      },
+      {
+        "rva": "0x5928110"
+      },
+      {
+        "rva": "0x5928330"
+      },
+      {
+        "rva": "0x5929340"
+      },
+      {
+        "rva": "0x592c830"
+      },
+      {
+        "rva": "0x592ccf0"
+      },
+      {
+        "rva": "0x592d000"
+      },
+      {
+        "rva": "0x592d050"
+      },
+      {
+        "rva": "0x592d690"
+      },
+      {
+        "rva": "0x592d720"
+      },
+      {
+        "rva": "0x592da10"
+      },
+      {
+        "rva": "0x592db10"
+      },
+      {
+        "rva": "0x592de30"
+      },
+      {
+        "rva": "0x592e390"
+      },
+      {
+        "rva": "0x592ecc0"
+      },
+      {
+        "rva": "0x592efa0"
+      },
+      {
+        "rva": "0x592f0b0"
+      },
+      {
+        "rva": "0x592f260"
+      },
+      {
+        "rva": "0x592f5f0"
+      },
+      {
+        "rva": "0x592f6f0"
+      },
+      {
+        "rva": "0x592fc30"
+      },
+      {
+        "rva": "0x593dbb0"
+      },
+      {
+        "rva": "0x5943940"
+      },
+      {
+        "rva": "0x5945540"
+      },
+      {
+        "rva": "0x5985340"
+      },
+      {
+        "rva": "0x5993410"
+      },
+      {
+        "rva": "0x59acbf0"
+      },
+      {
+        "rva": "0x59aecb0"
+      },
+      {
+        "rva": "0x59b86c0"
+      },
+      {
+        "rva": "0x59bd290"
+      },
+      {
+        "rva": "0x59c9fd0"
+      },
+      {
+        "rva": "0x5a77090"
+      },
+      {
+        "rva": "0x5a7e7c0"
+      },
+      {
+        "rva": "0x5a9c800"
+      },
+      {
+        "rva": "0x5ad0d20"
+      },
+      {
+        "rva": "0x5ad9740"
+      },
+      {
+        "rva": "0x5ad9b00"
+      },
+      {
+        "rva": "0x5ada640"
+      },
+      {
+        "rva": "0x6bb0490"
+      },
+      {
+        "rva": "0x6bc13e8"
+      },
+      {
+        "rva": "0x6d15840"
+      },
+      {
+        "rva": "0x6d15df0"
+      },
+      {
+        "rva": "0x6d36f80"
+      },
+      {
+        "rva": "0x6d36f88"
+      },
+      {
+        "rva": "0x6d36f98"
+      },
+      {
+        "rva": "0x6dc03c0"
+      },
+      {
+        "rva": "0x7b43960"
+      },
+      {
+        "rva": "0x7b43f10"
+      },
+      {
+        "rva": "0x7b8d640"
+      },
+      {
+        "rva": "0x7b94d68"
+      },
+      {
+        "rva": "0x7b95320"
+      },
+      {
+        "rva": "0x7b95400"
+      },
+      {
+        "rva": "0x7b954e0"
+      },
+      {
+        "rva": "0x7b99d90"
+      },
+      {
+        "rva": "0x7ba1bf8"
+      },
+      {
+        "rva": "0x86f6b68"
+      },
+      {
+        "rva": "0x86f7360"
+      },
+      {
+        "rva": "0x87010e8"
+      },
+      {
+        "rva": "0x8739b48"
+      },
+      {
+        "rva": "0x8cf7900"
+      },
+      {
+        "rva": "0x8cf84f8"
+      },
+      {
+        "rva": "0x8cf8500"
+      }
+    ]
+  },
+  "mapping": {
+    "bindings": {
+      "0x10fd050": {
+        "new_rva": "0x10fd9d0"
+      },
+      "0x10fdcc0": {
+        "new_rva": "0x10fe640"
+      },
+      "0x10fddc0": {
+        "new_rva": "0x10fe740"
+      },
+      "0x11072d0": {
+        "new_rva": "0x1107c50"
+      },
+      "0x1dcc4a0": {
+        "new_rva": "0x1dccd60"
+      },
+      "0x20f8b70": {
+        "new_rva": "0x20f9510"
+      },
+      "0x228bab0": {
+        "new_rva": "0x228c470"
+      },
+      "0x23d76a0": {
+        "new_rva": "0x23d8060"
+      },
+      "0x2804ac0": {
+        "new_rva": "0x2805860"
+      },
+      "0x56b4290": {
+        "new_rva": "0x56b4ff0"
+      },
+      "0x5811d40": {
+        "new_rva": "0x5812aa0"
+      },
+      "0x5817fe0": {
+        "new_rva": "0x5818d40"
+      },
+      "0x5818a50": {
+        "new_rva": "0x58197b0"
+      },
+      "0x5842490": {
+        "new_rva": "0x58431f0"
+      },
+      "0x5851440": {
+        "new_rva": "0x58521a0"
+      },
+      "0x58522f0": {
+        "new_rva": "0x5853050"
+      },
+      "0x5852940": {
+        "new_rva": "0x58536a0"
+      },
+      "0x5852a00": {
+        "new_rva": "0x5853760"
+      },
+      "0x5875820": {
+        "new_rva": "0x5876580"
+      },
+      "0x58760c0": {
+        "new_rva": "0x5876e20"
+      },
+      "0x5877e30": {
+        "new_rva": "0x5878b90"
+      },
+      "0x5877fb0": {
+        "new_rva": "0x5878d10"
+      },
+      "0x587b220": {
+        "new_rva": "0x587bf80"
+      },
+      "0x587db90": {
+        "new_rva": "0x587e8f0"
+      },
+      "0x587e630": {
+        "new_rva": "0x587f390"
+      },
+      "0x58ac920": {
+        "new_rva": "0x58ad680"
+      },
+      "0x58ae180": {
+        "new_rva": "0x58aeee0"
+      },
+      "0x58ae590": {
+        "new_rva": "0x58af2f0"
+      },
+      "0x58ae870": {
+        "new_rva": "0x58af5d0"
+      },
+      "0x58aeff0": {
+        "new_rva": "0x58afd50"
+      },
+      "0x58af000": {
+        "new_rva": "0x58afd60"
+      },
+      "0x58af080": {
+        "new_rva": "0x58afde0"
+      },
+      "0x58af150": {
+        "new_rva": "0x58afeb0"
+      },
+      "0x58af360": {
+        "new_rva": "0x58b00c0"
+      },
+      "0x58af4b0": {
+        "new_rva": "0x58b0210"
+      },
+      "0x58af540": {
+        "new_rva": "0x58b02a0"
+      },
+      "0x58af580": {
+        "new_rva": "0x58b02e0"
+      },
+      "0x58af630": {
+        "new_rva": "0x58b0390"
+      },
+      "0x58af690": {
+        "new_rva": "0x58b03f0"
+      },
+      "0x58b1e90": {
+        "new_rva": "0x58b2bf0"
+      },
+      "0x58c7e50": {
+        "new_rva": "0x58c8bb0"
+      },
+      "0x58c8710": {
+        "new_rva": "0x58c9470"
+      },
+      "0x58c8b70": {
+        "new_rva": "0x58c98d0"
+      },
+      "0x58c91a0": {
+        "new_rva": "0x58c9f00"
+      },
+      "0x58c94d0": {
+        "new_rva": "0x58ca230"
+      },
+      "0x58cac60": {
+        "new_rva": "0x58cb9c0"
+      },
+      "0x58caf50": {
+        "new_rva": "0x58cbcb0"
+      },
+      "0x58cbbf0": {
+        "new_rva": "0x58cc950"
+      },
+      "0x58cbe10": {
+        "new_rva": "0x58ccb70"
+      },
+      "0x58cdc30": {
+        "new_rva": "0x58ce990"
+      },
+      "0x58ce9b0": {
+        "new_rva": "0x58cf710"
+      },
+      "0x58cec20": {
+        "new_rva": "0x58cf980"
+      },
+      "0x58de740": {
+        "new_rva": "0x58df4a0"
+      },
+      "0x58dfeb0": {
+        "new_rva": "0x58e0c10"
+      },
+      "0x58e0f90": {
+        "new_rva": "0x58e1cf0"
+      },
+      "0x58f19f0": {
+        "new_rva": "0x58f2750"
+      },
+      "0x58fa230": {
+        "new_rva": "0x58faf90"
+      },
+      "0x58fa280": {
+        "new_rva": "0x58fafe0"
+      },
+      "0x58fa310": {
+        "new_rva": "0x58fb070"
+      },
+      "0x58fa630": {
+        "new_rva": "0x58fb390"
+      },
+      "0x58fab50": {
+        "new_rva": "0x58fb8b0"
+      },
+      "0x58faba0": {
+        "new_rva": "0x58fb900"
+      },
+      "0x58fabf0": {
+        "new_rva": "0x58fb950"
+      },
+      "0x591c800": {
+        "new_rva": "0x591d560"
+      },
+      "0x591cb70": {
+        "new_rva": "0x591d8d0"
+      },
+      "0x5924640": {
+        "new_rva": "0x59253a0"
+      },
+      "0x5925170": {
+        "new_rva": "0x5925ed0"
+      },
+      "0x5926200": {
+        "new_rva": "0x5926f60"
+      },
+      "0x59263a0": {
+        "new_rva": "0x5927100"
+      },
+      "0x59263b0": {
+        "new_rva": "0x5927110"
+      },
+      "0x59268f0": {
+        "new_rva": "0x5927650"
+      },
+      "0x59269b0": {
+        "new_rva": "0x5927710"
+      },
+      "0x5926b10": {
+        "new_rva": "0x5927870"
+      },
+      "0x59277a0": {
+        "new_rva": "0x5928500"
+      },
+      "0x5927dc0": {
+        "new_rva": "0x5928b20"
+      },
+      "0x5928110": {
+        "new_rva": "0x5928e70"
+      },
+      "0x5928330": {
+        "new_rva": "0x5929090"
+      },
+      "0x5929340": {
+        "new_rva": "0x592a0a0"
+      },
+      "0x592c830": {
+        "new_rva": "0x592d590"
+      },
+      "0x592ccf0": {
+        "new_rva": "0x592da50"
+      },
+      "0x592d000": {
+        "new_rva": "0x592dd60"
+      },
+      "0x592d050": {
+        "new_rva": "0x592ddb0"
+      },
+      "0x592d690": {
+        "new_rva": "0x592e3f0"
+      },
+      "0x592d720": {
+        "new_rva": "0x592e480"
+      },
+      "0x592da10": {
+        "new_rva": "0x592e770"
+      },
+      "0x592db10": {
+        "new_rva": "0x592e870"
+      },
+      "0x592de30": {
+        "new_rva": "0x592eb90"
+      },
+      "0x592e390": {
+        "new_rva": "0x592f0f0"
+      },
+      "0x592ecc0": {
+        "new_rva": "0x592fa20"
+      },
+      "0x592efa0": {
+        "new_rva": "0x592fd00"
+      },
+      "0x592f0b0": {
+        "new_rva": "0x592fe10"
+      },
+      "0x592f260": {
+        "new_rva": "0x592ffc0"
+      },
+      "0x592f5f0": {
+        "new_rva": "0x5930350"
+      },
+      "0x592f6f0": {
+        "new_rva": "0x5930450"
+      },
+      "0x592fc30": {
+        "new_rva": "0x5930990"
+      },
+      "0x593dbb0": {
+        "new_rva": "0x593e910"
+      },
+      "0x5943940": {
+        "new_rva": "0x59446a0"
+      },
+      "0x5945540": {
+        "new_rva": "0x59462a0"
+      },
+      "0x5985340": {
+        "new_rva": "0x59860a0"
+      },
+      "0x5993410": {
+        "new_rva": "0x5994170"
+      },
+      "0x59acbf0": {
+        "new_rva": "0x59ad950"
+      },
+      "0x59aecb0": {
+        "new_rva": "0x59afa10"
+      },
+      "0x59b86c0": {
+        "new_rva": "0x59b9420"
+      },
+      "0x59bd290": {
+        "new_rva": "0x59bdff0"
+      },
+      "0x59c9fd0": {
+        "new_rva": "0x59cad30"
+      },
+      "0x5a77090": {
+        "new_rva": "0x5a77df0"
+      },
+      "0x5a7e7c0": {
+        "new_rva": "0x5a7f520"
+      },
+      "0x5a9c800": {
+        "new_rva": "0x5a9d560"
+      },
+      "0x5ad0d20": {
+        "new_rva": "0x5ad1a80"
+      },
+      "0x5ad9740": {
+        "new_rva": "0x5ada4a0"
+      },
+      "0x5ad9b00": {
+        "new_rva": "0x5ada860"
+      },
+      "0x5ada640": {
+        "new_rva": "0x5adb3a0"
+      },
+      "0x6d36f80": {
+        "new_rva": "0x6d380e0"
+      },
+      "0x6d36f88": {
+        "new_rva": "0x6d380e8"
+      },
+      "0x6d36f98": {
+        "new_rva": "0x6d380f8"
+      },
+      "0x7b43960": {
+        "new_rva": "0x7b44a60"
+      },
+      "0x7b8d640": {
+        "new_rva": "0x7b8e740"
+      },
+      "0x7b94d68": {
+        "new_rva": "0x7b95e68"
+      },
+      "0x7b95320": {
+        "new_rva": "0x7b96420"
+      },
+      "0x7b95400": {
+        "new_rva": "0x7b96500"
+      },
+      "0x7b954e0": {
+        "new_rva": "0x7b965e0"
+      },
+      "0x7b99d90": {
+        "new_rva": "0x7b9ae90"
+      },
+      "0x87010e8": {
+        "new_rva": "0x8702208"
+      },
+      "0x8cf7900": {
+        "new_rva": "0x8cf8d80"
+      },
+      "0x8cf84f8": {
+        "new_rva": "0x8cf9978"
+      },
+      "0x6bb0490": {
+        "new_rva": "0x6bb1530"
+      },
+      "0x6bc13e8": {
+        "new_rva": "0x6bc2488"
+      },
+      "0x6d15840": {
+        "new_rva": "0x6d169a0"
+      },
+      "0x6d15df0": {
+        "new_rva": "0x6d16f50"
+      },
+      "0x6dc03c0": {
+        "new_rva": "0x6dc1510"
+      },
+      "0x7b43f10": {
+        "new_rva": "0x7b45010"
+      },
+      "0x7ba1bf8": {
+        "new_rva": "0x7ba2cf8"
+      },
+      "0x2b380c0": {
+        "new_rva": "0x2b38e50"
+      },
+      "0x591ccde": {
+        "new_rva": "0x591da3e"
+      },
+      "0x591d089": {
+        "new_rva": "0x591dde9"
+      },
+      "0x591d25e": {
+        "new_rva": "0x591dfbe"
+      },
+      "0x591d4d5": {
+        "new_rva": "0x591e235"
+      },
+      "0x591d677": {
+        "new_rva": "0x591e3d7"
+      },
+      "0x591d83c": {
+        "new_rva": "0x591e59c"
+      },
+      "0x591d989": {
+        "new_rva": "0x591e6e9"
+      },
+      "0x591dba4": {
+        "new_rva": "0x591e904"
+      },
+      "0x591de47": {
+        "new_rva": "0x591eba7"
+      },
+      "0x591dfa4": {
+        "new_rva": "0x591ed04"
+      },
+      "0x591e0be": {
+        "new_rva": "0x591ee1e"
+      },
+      "0x8cf8500": {
+        "new_rva": "0x8cf9980"
+      },
+      "0x86f6b68": {
+        "new_rva": "0x86f7c68"
+      },
+      "0x86f7360": {
+        "new_rva": "0x86f8460"
+      },
+      "0x8739b48": {
+        "new_rva": "0x873afc8"
+      }
+    }
+  },
+  "data_recipes": {
+    "0x6bb0490": {
+      "recipes": [
+        {
+          "new_rva": "0x6bb1530",
+          "anchor_old": "0x1f7e60a",
+          "anchor_new": "0x1f7eeca",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 128
+        },
+        {
+          "new_rva": "0x6bb1530",
+          "anchor_old": "0x1f7e9ea",
+          "anchor_new": "0x1f7f2aa",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 125
+        }
+      ]
+    },
+    "0x6bc13e8": {
+      "recipes": [
+        {
+          "new_rva": "0x6bc2488",
+          "anchor_old": "0x1f8589a",
+          "anchor_new": "0x1f8615a",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 124
+        },
+        {
+          "new_rva": "0x6bc2488",
+          "anchor_old": "0x2b37250",
+          "anchor_new": "0x2b37fe0",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 124
+        }
+      ]
+    },
+    "0x6d15840": {
+      "recipes": [
+        {
+          "new_rva": "0x6d169a0",
+          "anchor_old": "0x58393b3",
+          "anchor_new": "0x583a113",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 127
+        },
+        {
+          "new_rva": "0x6d169a0",
+          "anchor_old": "0x58581e9",
+          "anchor_new": "0x5858f49",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 128
+        }
+      ]
+    },
+    "0x6d15df0": {
+      "recipes": [
+        {
+          "new_rva": "0x6d16f50",
+          "anchor_old": "0x228d4c8",
+          "anchor_new": "0x228de88",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 124
+        },
+        {
+          "new_rva": "0x6d16f50",
+          "anchor_old": "0x593c993",
+          "anchor_new": "0x593d6f3",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 128
+        }
+      ]
+    },
+    "0x6d36f80": {
+      "recipes": [
+        {
+          "new_rva": "0x6d380e0",
+          "anchor_old": "0x25e9f34",
+          "anchor_new": "0x25ea964",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 126
+        },
+        {
+          "new_rva": "0x6d380e0",
+          "anchor_old": "0x29146a0",
+          "anchor_new": "0x28fa671",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 124
+        }
+      ]
+    },
+    "0x6dc03c0": {
+      "recipes": [
+        {
+          "new_rva": "0x6dc1510",
+          "anchor_old": "0x2bdf5f4",
+          "anchor_new": "0x2be0384",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 123
+        },
+        {
+          "new_rva": "0x6dc1510",
+          "anchor_old": "0x2bf029d",
+          "anchor_new": "0x2bf102d",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 127
+        }
+      ]
+    },
+    "0x7b43960": {
+      "recipes": [
+        {
+          "new_rva": "0x7b44a60",
+          "anchor_old": "0x5839a07",
+          "anchor_new": "0x583a767",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 122
+        },
+        {
+          "new_rva": "0x7b44a60",
+          "anchor_old": "0x5839b54",
+          "anchor_new": "0x583a8b4",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 128
+        }
+      ]
+    },
+    "0x7b43f10": {
+      "recipes": [
+        {
+          "new_rva": "0x7b45010",
+          "anchor_old": "0x57dbedb",
+          "anchor_new": "0x57dcc3b",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 128
+        },
+        {
+          "new_rva": "0x7b45010",
+          "anchor_old": "0x58398a8",
+          "anchor_new": "0x583a608",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 126
+        }
+      ]
+    },
+    "0x7b8d640": {
+      "recipes": [
+        {
+          "new_rva": "0x7b8e740",
+          "anchor_old": "0x58518b2",
+          "anchor_new": "0x5852612",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 128
+        },
+        {
+          "new_rva": "0x7b8e740",
+          "anchor_old": "0x5851ce6",
+          "anchor_new": "0x5852a46",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 125
+        }
+      ]
+    },
+    "0x7b94d68": {
+      "recipes": [
+        {
+          "new_rva": "0x7b95e68",
+          "anchor_old": "0x58abea5",
+          "anchor_new": "0x58acc05",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 126
+        }
+      ]
+    },
+    "0x7b95320": {
+      "recipes": [
+        {
+          "new_rva": "0x7b96420",
+          "anchor_old": "0x58ab98a",
+          "anchor_new": "0x58ac6ea",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 122
+        }
+      ]
+    },
+    "0x7b95400": {
+      "recipes": [
+        {
+          "new_rva": "0x7b96500",
+          "anchor_old": "0x58ab004",
+          "anchor_new": "0x58abd64",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 124
+        },
+        {
+          "new_rva": "0x7b96500",
+          "anchor_old": "0x58ad446",
+          "anchor_new": "0x58ae1a6",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 122
+        }
+      ]
+    },
+    "0x7b954e0": {
+      "recipes": [
+        {
+          "new_rva": "0x7b965e0",
+          "anchor_old": "0x58ab0ff",
+          "anchor_new": "0x58abe5f",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 128
+        },
+        {
+          "new_rva": "0x7b965e0",
+          "anchor_old": "0x58abc0e",
+          "anchor_new": "0x58ac96e",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 128
+        }
+      ]
+    },
+    "0x7b99d90": {
+      "recipes": [
+        {
+          "new_rva": "0x7b9ae90",
+          "anchor_old": "0x592274e",
+          "anchor_new": "0x59234ae",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 125
+        },
+        {
+          "new_rva": "0x7b9ae90",
+          "anchor_old": "0x59439d5",
+          "anchor_new": "0x5944735",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 128
+        }
+      ]
+    },
+    "0x7ba1bf8": {
+      "recipes": [
+        {
+          "new_rva": "0x7ba2cf8",
+          "anchor_old": "0x5a52fe9",
+          "anchor_new": "0x5a53d49",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 123
+        },
+        {
+          "new_rva": "0x7ba2cf8",
+          "anchor_old": "0x5a55aff",
+          "anchor_new": "0x5a5685f",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 128
+        }
+      ]
+    },
+    "0x86f6b68": {
+      "recipes": [
+        {
+          "new_rva": "0x86f7c68",
+          "anchor_old": "0x1f7ef90",
+          "anchor_new": "0x1f7f850",
+          "target_instruction_offset": 7,
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 192
+        }
+      ]
+    },
+    "0x86f7360": {
+      "recipes": [
+        {
+          "new_rva": "0x86f8460",
+          "anchor_old": "0x1f86980",
+          "anchor_new": "0x1f87240",
+          "target_instruction_offset": 7,
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "literal_constraint": {
+            "instruction_offset": 70,
+            "displacement_offset": 3,
+            "instruction_size": 7,
+            "bytes": "530053004d0065006e0075004d0061006e0061006700650072000000",
+            "text": "SSMenuManager\u0000"
+          },
+          "length": 192
+        }
+      ]
+    },
+    "0x87010e8": {
+      "recipes": [
+        {
+          "new_rva": "0x8702208",
+          "anchor_old": "0x20dd9d0",
+          "anchor_new": "0x20de370",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 128
+        },
+        {
+          "new_rva": "0x8702208",
+          "anchor_old": "0x20f06d0",
+          "anchor_new": "0x20f1070",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 126
+        }
+      ]
+    },
+    "0x8739b48": {
+      "recipes": [
+        {
+          "new_rva": "0x873afc8",
+          "anchor_old": "0x8b7a70",
+          "anchor_new": "0x8b7a70",
+          "target_instruction_offset": 168,
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 511
+        }
+      ]
+    },
+    "0x8cf7900": {
+      "recipes": [
+        {
+          "new_rva": "0x8cf8d80",
+          "anchor_old": "0x1dcc3b3",
+          "anchor_new": "0x1dccc73",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 128
+        },
+        {
+          "new_rva": "0x8cf8d80",
+          "anchor_old": "0x1dcc3db",
+          "anchor_new": "0x1dccc9b",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 126
+        }
+      ]
+    },
+    "0x8cf84f8": {
+      "recipes": [
+        {
+          "new_rva": "0x8cf9978",
+          "anchor_old": "0x59d3680",
+          "anchor_new": "0x59d43e0",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 127
+        },
+        {
+          "new_rva": "0x8cf9978",
+          "anchor_old": "0x59d39c5",
+          "anchor_new": "0x59d4725",
+          "disp_offset": 3,
+          "instruction_size": 7,
+          "length": 128
+        }
+      ]
+    }
+  }
+}

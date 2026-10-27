@@ -1,5 +1,68 @@
 # Native helpers and source-only construction core
 
+## Current image policy: adaptive bindings, no executable SHA
+
+All six helpers now validate the loaded PE64/AMD64 image and required RVA bounds
+without opening or hashing the game executable. Existing instruction-prefix,
+vtable/pointer, thread, ownership and restoration guards remain. The backend
+still hashes its OWN DLL for optional helper-identity diagnostics; that is not
+an EXE compatibility gate. Canonical operation identifiers remain stable; their loaded addresses now come
+from instruction and decoded-reference resolution.
+
+The shared native_image.h is covered by a compiled fixture that accepts two
+executables with different disk hashes but identical native layout, and rejects
+bad PE architecture/headers/ranges and changed instruction prefixes. Older
+sections below are historical; former EXE SHA gating no longer applies.
+Operational backend revision is ranked-bindings1. Optional tracer schema6/bindings1
+reports validation:native_layout instead of a target EXE digest. Console/session
+reports use the same validation label, and audit.lua no longer compares a hash.
+
+
+### Game v3020 and v3022
+
+`native_bindings.c` resolves 147 reviewed operations/globals/table addresses on
+worker threads before any callbacks are published. Unique instruction patterns
+retain field offsets and local control flow; only decoded image-relative
+references are normalized. Data addresses follow decoded RIP references, with
+independent references and class-name constraints where needed. Missing,
+ambiguous, conflicting or out-of-section results refuse with `binding_error`.
+Original pointer, ownership, ABI, thread and hook-restoration guards still run.
+Hook signatures use interior instructions so independently loaded helpers can
+resolve after another helper installs its owned hook. The owning helper checks
+its prologue and relative targets before installing its own hook.
+
+Game v3020 and v3022 are user-confirmed tested, and both executables have
+reviewed mappings. Similar future relocations
+can resolve without a new EXE hash or a guessed global offset. Changes to
+instruction shape, object fields, ownership or protocol still require review.
+Matching old/new addresses does not prove cross-version multiplayer protocol
+compatibility; use matching game versions for a tournament until tested.
+
+Build all six DLLs with the existing MinGW compiler:
+
+```sh
+python3 lan/build_native.py --output .build/native
+```
+
+This stages DLLs without changing a game installation. To refresh the launcher's
+source payload, copy the six resulting DLLs into
+`lan/ue4ss/SzeroLAN/scripts/`, then rebuild both standalone launchers. Ordinary
+builds use the checked-in catalog and do not need original game files.
+Regeneration is developer-only and requires `pefile` plus GNU `objdump`:
+
+```sh
+python3 lan/generate_native_bindings.py --old /path/to/original.exe --updated /path/to/updated.exe
+```
+
+`native_bindings_recipes.json` supplies the reviewed metadata. It contains no
+complete game executable. `test_native_bindings.c` uses synthetic code/data to
+verify relocation, ambiguity, field/branch changes, reference checks and PE
+bounds. The optional `test_native_bindings_image.c` maps explicitly supplied
+executables as non-executable DATA and can inject relocation/prologue damage;
+it never calls a game instruction. Actual two-PC game acceptance remains a
+separate test.
+
+
 ## Operational ranked-result1 and optional postresult2 logging
 
 No native session/backend diagnostic files are written unless
@@ -95,8 +158,8 @@ wait_idle calls or artificial delays between operations.
 Separate from the byte-identical working session DLL. `145a9c800` is intercepted
 only for the bound title backend and five exact route names; unrelated services
 forward unchanged. Known game-thread calls yield via the original task scheduler.
-Only the worker hashes the image, installs/restores its owned entry hook and
-performs loopback I/O. Exact original SHA, seven native entry prefixes and the
+Only the worker validates the loaded image, installs/restores its owned entry hook and
+performs loopback I/O. Native image bounds, entry prefixes and the
 borrowed-stream vtable slots are checked before publication. Unknown builds
 refuse; DLL/trampolines remain process-pinned for suspended native fibers.
 
@@ -120,7 +183,7 @@ endpoint, account ID or Steam authentication blob is forwarded.
 Build from workspace root with the existing MinGW toolchain:
 
 ```sh
-x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -shared -static-libgcc -Wl,--no-insert-timestamp lan/native/backend_adapter.c lan/native/backend_response.c lan/native/vendor/minhook/src/buffer.c lan/native/vendor/minhook/src/hook.c lan/native/vendor/minhook/src/trampoline.c lan/native/vendor/minhook/src/hde/hde64.c -o lan/ue4ss/SzeroLAN/scripts/backend_adapter.dll -lbcrypt -lws2_32
+x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -shared -static-libgcc -Wl,--no-insert-timestamp lan/native/backend_adapter.c lan/native/native_bindings.c lan/native/backend_response.c lan/native/vendor/minhook/src/buffer.c lan/native/vendor/minhook/src/hook.c lan/native/vendor/minhook/src/trampoline.c lan/native/vendor/minhook/src/hde/hde64.c -o lan/ue4ss/SzeroLAN/scripts/backend_adapter.dll -lbcrypt -lws2_32
 ```
 
 `test_backend_response.c` checks layout, ownership, self-relative headers,
@@ -139,7 +202,7 @@ observer does not change native_search.dll. It statically links unmodified
 MinHook v1.3.4 (vendor/minhook/UPSTREAM.md + LICENSE.txt) for ten temporary
 in-memory entry wrappers. It always calls the original with the same Win64
 scalar arguments, preserves the original RAX and LastError, and only reads
-borrowed output status. Main-thread recording is bounded; hashing/file I/O and
+borrowed output status. Main-thread recording is bounded; validation/file I/O and
 hook enable/disable are worker-only. Never remove hooks/uninitialize/free
 trampolines: original native fibers may still be suspended inside them.
 
@@ -165,7 +228,7 @@ backend_status_valid. It never changes that status or the HTTP inputs/outputs.
 Build with an existing x86-64 MinGW compiler, from the workspace root:
 
 ```sh
-x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -shared -static-libgcc -Wl,--no-insert-timestamp lan/native/service_trace.c lan/native/vendor/minhook/src/buffer.c lan/native/vendor/minhook/src/hook.c lan/native/vendor/minhook/src/trampoline.c lan/native/vendor/minhook/src/hde/hde64.c -o lan/ue4ss/SzeroLAN/scripts/service_trace.dll -lbcrypt
+x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -shared -static-libgcc -Wl,--no-insert-timestamp lan/native/service_trace.c lan/native/native_bindings.c lan/native/vendor/minhook/src/buffer.c lan/native/vendor/minhook/src/hook.c lan/native/vendor/minhook/src/trampoline.c lan/native/vendor/minhook/src/hde/hde64.c -o lan/ue4ss/SzeroLAN/scripts/service_trace.dll -lbcrypt
 ```
 
 test_service_trace.c uses synthetic exported functions, test-only shortened
@@ -276,11 +339,13 @@ Do not describe synthetic callback tests as execution of the real game ABI.
 Reproducible Win64 build from the workspace root:
 
 ```sh
-x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -DSZERO_SESSION_V3 -shared -static-libgcc -Wl,--no-insert-timestamp lan/native/native_search.c lan/native/native_session_host.c lan/native/native_session_adapter.c lan/native/native_session_codec.c lan/native/native_session_search.c lan/native/native_session_inspect.c lan/native/native_lan_identity.c lan/native/native_lan_userinfo.c lan/native/session_materializer.c lan/native/native_session_wire.c lan/native/native_lan_transport.c -o lan/ue4ss/SzeroLAN/scripts/native_search.dll -lbcrypt -lws2_32
+x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -DSZERO_SESSION_V3 -shared -static-libgcc -Wl,--no-insert-timestamp lan/native/native_search.c lan/native/native_bindings.c lan/native/native_session_host.c lan/native/native_session_adapter.c lan/native/native_session_codec.c lan/native/native_session_search.c lan/native/native_session_inspect.c lan/native/native_lan_identity.c lan/native/native_lan_userinfo.c lan/native/session_materializer.c lan/native/native_session_wire.c lan/native/native_lan_transport.c -o lan/ue4ss/SzeroLAN/scripts/native_search.dll -lbcrypt -lws2_32
 ```
 
 For the actual compiled IPC worker fixture, replace `native_search.c` with
-`test_native_session_ipc.c`, remove `-DSZERO_SESSION_V3 -shared`, and output to
+`test_native_session_ipc.c`, omit `native_bindings.c`, remove
+`-DSZERO_SESSION_V3 -shared`, add `-DSZERO_BINDINGS_TEST_IDENTITY` for all
+fixture translation units, and output to
 `/tmp/szero-session-v3-ipc.exe` (the fixture defines its own test macros).
 Set `SZERO_SESSION_V3_IPC_EXE` to that path for discovery tests, and select a
 disposable `/tmp/szero-*` Wine prefix. The separate synthetic publication
@@ -351,7 +416,7 @@ per-context redirect or proof of global quiescence. All other virtual methods
 are forwarded unchanged. No hot unload/reinitialization is supported.
 
 ```sh
-x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -shared -static-libgcc -Wl,--no-insert-timestamp lan/native/native_search.c -o lan/ue4ss/SzeroLAN/scripts/native_search.dll -lbcrypt -lws2_32
+x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -shared -static-libgcc -Wl,--no-insert-timestamp lan/native/native_search.c lan/native/native_bindings.c -o lan/ue4ss/SzeroLAN/scripts/native_search.dll -lbcrypt -lws2_32
 x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -DSZERO_NATIVE_SEARCH_TEST lan/native/native_search.c -o /tmp/szero-native-search-test.exe -lbcrypt -lws2_32
 ```
 
@@ -377,7 +442,7 @@ x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror lan/native/test_native
 WINEPREFIX=/tmp/YOUR_TEST_PREFIX WINEDEBUG=-all SZERO_NATIVE_IPC_EXE=/tmp/szero-native-ipc-fixture.exe python -m unittest test_native_search_compiled -v
 ```
 
-This fixture bypasses no production hash check: it compiles the same unexported
+This fixture bypasses no production image-layout check: it compiles the same unexported
 request-lifecycle function into its own test executable. No game/native task
 function is invoked. The game log supplied before v2 proves hook publication
 and one interception, not the new worker's success in an actual game run.
@@ -403,7 +468,7 @@ stream/properties. Identity strings are not reclassified as authentication data.
 
 There is deliberately no DLL export, hardcoded-address call, loader entry or
 installed hook for this source. A future host still must verify the exact EXE
-hash, calling thread/context lifetime and function identity, decode server data,
+layout, calling thread/context lifetime and function identity, decode server data,
 manage native results, install the provider and deliver membership updates.
 Native member wrappers borrow node pointers: do not replace/free their nodes
 without the original update lifecycle. No account/ownership checks are changed.
@@ -425,13 +490,13 @@ These results establish source layout/bounds contracts, not game integration.
 `session_probe.c` builds the third bundled diagnostic helper:
 
 ```sh
-x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -shared -static-libgcc -Wl,--no-insert-timestamp -o lan/ue4ss/SzeroLAN/scripts/session_probe.dll lan/native/session_probe.c -lbcrypt
+x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -shared -static-libgcc -Wl,--no-insert-timestamp -o lan/ue4ss/SzeroLAN/scripts/session_probe.dll lan/native/session_probe.c lan/native/native_bindings.c -lbcrypt
 ```
 
 It is explicitly enabled by `Start-Native-Trace.cmd` through
 `SZERO_LAN_NATIVE_TRACE=1`, not loaded on normal launches. `session_trace.lua`
 is called once per game-thread poll, including while unpaired. The helper
-verifies the supported EXE hash asynchronously before bounded own-process
+validates the loaded native image asynchronously before bounded own-process
 ReadProcessMemory calls. Getter `1459d3680` reads native context global
 `148cf84f8` (RVA8cf84f8); title constructor `145a52fd0` installs vtable
 `147ba1bf8` (RVA7ba1bf8). Both identities are checked; no getter is invoked.
@@ -447,7 +512,7 @@ Output: `session_trace_<instance>.jsonl` beside the DLL. It records only changes
 UTC and monotonic time, PID, exact image identity and whitelisted scalar values.
 At most 300 polls/300 seconds after verification, max256 records. This is not
 a native LAN backend or readiness check. Fixture compilation with
-`-DSZERO_SESSION_TEST` exercises only owned synthetic memory and hash rejection;
+`-DSZERO_SESSION_TEST` exercises only owned synthetic memory and layout rejection;
 test-only writes are excluded from the distributed DLL.
 
 ## Console registry helper
@@ -455,16 +520,16 @@ test-only writes are excluded from the distributed DLL.
 `console_probe.c` builds the bundled `scripts/console_probe.dll` with MinGW-w64:
 
 ```sh
-x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -shared -static-libgcc -Wl,--no-insert-timestamp -o lan/ue4ss/SzeroLAN/scripts/console_probe.dll lan/native/console_probe.c -lbcrypt
+x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -shared -static-libgcc -Wl,--no-insert-timestamp -o lan/ue4ss/SzeroLAN/scripts/console_probe.dll lan/native/console_probe.c lan/native/native_bindings.c -lbcrypt
 ```
 
 No third-party mod code or original game bytes are embedded. The module exports
 one Lua C function that returns no values and uses no Lua API linkage. Lua calls
 it only on the game thread after a match assignment. A worker first checks the
-running image file's SHA-256 against the exact supported build. Later calls
+loaded PE64 image and required address ranges. Later calls
 snapshot the own-process console registry through bounded ReadProcessMemory.
 There are no hooks, engine-function invocations, game-memory writes, sockets,
-platform/authentication calls, or setting changes. Hash failure disables reads.
+platform/authentication calls, or setting changes. Image-layout failure disables reads.
 The worker holds its DLL reference until it finishes, including during reload.
 
 Layout is from `analysis/console-manager-layout.txt` and
@@ -493,13 +558,13 @@ It is enabled only by game-root JSON `native_menu: true` through setup_launcher.
 It never calls matchmaking/authentication, changes original menus or travels.
 
 ```sh
-x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -shared -static-libgcc -Wl,--no-insert-timestamp -o lan/ue4ss/SzeroLAN/scripts/menu_bridge.dll lan/native/menu_bridge.c -lbcrypt
+x86_64-w64-mingw32-gcc -std=c11 -O2 -Wall -Wextra -Werror -shared -static-libgcc -Wl,--no-insert-timestamp -o lan/ue4ss/SzeroLAN/scripts/menu_bridge.dll lan/native/menu_bridge.c lan/native/native_bindings.c -lbcrypt
 ```
 
 The Lua module writes a bounded per-process request containing current fresh
 root/tree/button addresses and calls the helper in the same game-thread
 callback while those objects are live. Validation requires supported EXE file
-hash, current PID, increasing serial, same calling thread, exact native class
+image, current PID, increasing serial, same calling thread, exact native class
 globals/vtables, non-destroyed flags, tree ownership and distinct buttons.
 Only then may it call the verified two-argument binding method at RVA 0x2b380c0;
 the method's prologue is also checked. Bare native UI lifecycle/navigation
