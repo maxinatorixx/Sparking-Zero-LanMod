@@ -12,6 +12,29 @@ the existing scoped GitHub Actions release workflow; no loose dist launchers.
 Temporary stash kept safely while resolving upstream README overlap; all
 compatibility code/resources restored on top of13901b8 without history rewrite.
 
+Publication COMPLETE: compatibility commit78180267b406d62f9707fefecd4987bf51c8b5f8,
+annotated tagv0.1.2; upstream README13901b8 remains an ancestor, no force-push.
+GitHub Actions40546720996 PASSED both native Windows/Linux builds, UI/resource
+checks and scoped release job. Release:
+https://github.com/maxinatorixx/Sparking-Zero-LanMod/releases/tag/v0.1.2
+All4assets independently downloaded and verified against GitHub SHA256digests;
+all39Arena/all218source manifest entries and source/docs/screenshots verified.
+Published README retains both upstream removals and lists v3020/v3022 as tested.
+Independently read back both published onefiles: all14DLL/Lua/loader/license
+resources match tested source byte-for-byte. No game files, Update, analysis,
+logs/saves/secrets or generated standalone EXEs were added to Git.
+PublishedArenaZIP:c6d643c39331a271f7d3820c55f2a4236eff476b3a9eb74d4c1613bf990bcdce
+PublishedsourceZIP:afa2efd03b55b65a112403795ebcf07930fefcc6578be8179006c0692be65ffa
+Localdist completeZIPs/checksums synchronized to published assets. Publication
+operations did not write any loose root/desktop standalones. Current root
+standalones match the preceding local build (Linuxf383dc48...,Windows19ad6594...),
+while desktop files retain7a81918b.../66e9b3ec.... The older previous-turn
+/tmp/szero-multiversion-dist-before.sha256 no longer matches root files; do not
+restore that historical baseline over current files. Earlier local-only ZIP hashes below are
+historical and differ from native CI-built release archives. Local source
+manifest remains byte-identical to the published sourceZIP. No runtime code
+changed after381test validation; subsequent changes are publication docs only.
+
 ## Adaptive native bindings — local update (2026-10-27)
 
 User supplied a newer installation under ignored `/Update/` and requested both
